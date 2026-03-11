@@ -46,7 +46,7 @@
 
 ### Security
 
-- [ ] **SEC-01**: Supabase anon key is never exposed to the browser — all DB queries run server-side only
+- [x] **SEC-01**: Supabase anon key is never exposed to the browser — all DB queries run server-side only
 - [x] **SEC-02**: `APPROVAL_SECRET`, `ADMIN_PASSWORD`, and `SUPABASE_SERVICE_ROLE_KEY` never use the `NEXT_PUBLIC_` prefix
 
 ## v2 Requirements
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 1 | Complete |
 | FORM-01 | Phase 2 | Pending |
 | FORM-02 | Phase 2 | Pending |
