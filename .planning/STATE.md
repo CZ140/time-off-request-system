@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-03-PLAN.md — server-only lib module stubs
-last_updated: "2026-03-11T04:10:35.386Z"
+stopped_at: Completed 02-teacher-form-and-auto-denial-02-01-PLAN.md
+last_updated: "2026-03-11T04:57:28.975Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 0
 ---
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P01 | 8 | 3 tasks | 10 files |
 | Phase 01-foundation P02 | 3 | 2 tasks | 2 files |
 | Phase 01-foundation P03 | 5 | 3 tasks | 3 files |
+| Phase 02-teacher-form-and-auto-denial P01 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01-03]: All three lib files start with import 'server-only' — enforces SEC-01 at build time
 - [Phase 01-03]: Supabase uses @supabase/supabase-js directly (not @supabase/ssr) for service role client pattern
 - [Phase 01-03]: await cookies() is mandatory in getSession() — Next.js 15 async cookies() API requirement
+- [Phase 02-teacher-form-and-auto-denial]: FormState includes values field to restore form inputs after server-side validation failure (Next.js 15 resets uncontrolled inputs after server action)
+- [Phase 02-teacher-form-and-auto-denial]: redirect() placed outside try/catch so NEXT_REDIRECT is never swallowed by catch block
+- [Phase 02-teacher-form-and-auto-denial]: [Rule 1 - Bug] types/database.ts Relationships:[] and Views/Functions keys added to satisfy supabase-js v2.99 GenericSchema constraint
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T04:07:26.190Z
-Stopped at: Completed 01-03-PLAN.md — server-only lib module stubs
+Last session: 2026-03-11T04:57:28.971Z
+Stopped at: Completed 02-teacher-form-and-auto-denial-02-01-PLAN.md
 Resume file: None

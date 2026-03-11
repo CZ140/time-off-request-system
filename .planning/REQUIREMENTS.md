@@ -7,21 +7,21 @@
 
 ### Submission Form
 
-- [ ] **FORM-01**: Teacher can submit a request with full name, work email, start date, end date, leave type (7 options), blackout flag (yes/no), and optional reason
-- [ ] **FORM-02**: Form displays inline validation errors for all required fields before submission
-- [ ] **FORM-03**: Submit button is disabled on click to prevent duplicate submissions
-- [ ] **FORM-04**: Form rejects end dates before start date and start dates in the past
+- [x] **FORM-01**: Teacher can submit a request with full name, work email, start date, end date, leave type (7 options), blackout flag (yes/no), and optional reason
+- [x] **FORM-02**: Form displays inline validation errors for all required fields before submission
+- [x] **FORM-03**: Submit button is disabled on click to prevent duplicate submissions
+- [x] **FORM-04**: Form rejects end dates before start date and start dates in the past
 - [ ] **FORM-05**: Teacher is redirected to a confirmation page after successful submission
 
 ### Request Processing
 
-- [ ] **REQ-01**: All submissions are saved to the `requests` table in Supabase
-- [ ] **REQ-02**: Blackout-flagged requests are immediately set to `auto_denied` status — no admin email sent
+- [x] **REQ-01**: All submissions are saved to the `requests` table in Supabase
+- [x] **REQ-02**: Blackout-flagged requests are immediately set to `auto_denied` status — no admin email sent
 - [ ] **REQ-03**: Non-blackout requests are set to `pending` status and trigger admin notification email
 
 ### Email Notifications
 
-- [ ] **EMAIL-01**: Auto-denied teacher receives email explaining their dates fall on a blackout period
+- [x] **EMAIL-01**: Auto-denied teacher receives email explaining their dates fall on a blackout period
 - [ ] **EMAIL-02**: All admin addresses (from `ADMIN_EMAILS` env var) receive request details with tokenized Approve and Deny buttons
 - [ ] **EMAIL-03**: Teacher receives a warm approval confirmation email with their dates and leave type
 - [ ] **EMAIL-04**: Teacher receives a respectful denial email with their dates and leave type
@@ -85,14 +85,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 1 | Complete |
-| FORM-01 | Phase 2 | Pending |
-| FORM-02 | Phase 2 | Pending |
-| FORM-03 | Phase 2 | Pending |
-| FORM-04 | Phase 2 | Pending |
+| FORM-01 | Phase 2 | Complete |
+| FORM-02 | Phase 2 | Complete |
+| FORM-03 | Phase 2 | Complete |
+| FORM-04 | Phase 2 | Complete |
 | FORM-05 | Phase 2 | Pending |
-| REQ-01 | Phase 2 | Pending |
-| REQ-02 | Phase 2 | Pending |
-| EMAIL-01 | Phase 2 | Pending |
+| REQ-01 | Phase 2 | Complete |
+| REQ-02 | Phase 2 | Complete |
+| EMAIL-01 | Phase 2 | Complete |
 | REQ-03 | Phase 3 | Pending |
 | EMAIL-02 | Phase 3 | Pending |
 | APPR-01 | Phase 3 | Pending |
