@@ -46,7 +46,11 @@ Plans:
   3. Submit button disables on click and the form cannot be submitted twice
   4. Submitted request appears in the Supabase `requests` table with correct status (`pending` or `auto_denied`)
   5. Teacher whose request is flagged as a blackout date receives an auto-denial email and is redirected to a confirmation page; no admin email is sent
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Server action (submitRequest), FormState type, and auto-denial email template
+- [ ] 02-02-PLAN.md — Teacher form UI (page.tsx) and shared confirmation page
 
 ### Phase 3: Email Approval Workflow
 **Goal**: Admins can approve or deny any pending request directly from their inbox with a single click, and the teacher receives a confirmation email immediately after
@@ -90,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/3 | In Progress|  |
-| 2. Teacher Form and Auto-Denial | 0/? | Not started | - |
+| 2. Teacher Form and Auto-Denial | 0/2 | Not started | - |
 | 3. Email Approval Workflow | 0/? | Not started | - |
 | 4. Admin Dashboard | 0/? | Not started | - |
 | 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
