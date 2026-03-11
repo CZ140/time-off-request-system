@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-teacher-form-and-auto-denial-02-01-PLAN.md
-last_updated: "2026-03-11T04:57:28.975Z"
+stopped_at: "Checkpoint: 02-02 Task 3 human-verify — awaiting end-to-end form flow verification"
+last_updated: "2026-03-11T05:02:55.707Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P02 | 3 | 2 tasks | 2 files |
 | Phase 01-foundation P03 | 5 | 3 tasks | 3 files |
 | Phase 02-teacher-form-and-auto-denial P01 | 5 | 2 tasks | 3 files |
+| Phase 02-teacher-form-and-auto-denial P02 | 8 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 02-teacher-form-and-auto-denial]: FormState includes values field to restore form inputs after server-side validation failure (Next.js 15 resets uncontrolled inputs after server action)
 - [Phase 02-teacher-form-and-auto-denial]: redirect() placed outside try/catch so NEXT_REDIRECT is never swallowed by catch block
 - [Phase 02-teacher-form-and-auto-denial]: [Rule 1 - Bug] types/database.ts Relationships:[] and Views/Functions keys added to satisfy supabase-js v2.99 GenericSchema constraint
+- [Phase 02-teacher-form-and-auto-denial]: useActionState pending flag drives disabled submit button and Submitting... label, satisfying FORM-03 no-double-submit
+- [Phase 02-teacher-form-and-auto-denial]: [Rule 1 - Bug] Resend instantiation moved inside sendEmail() to defer API key access to runtime — top-level new Resend() threw during npm run build with empty RESEND_API_KEY
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T04:57:28.971Z
-Stopped at: Completed 02-teacher-form-and-auto-denial-02-01-PLAN.md
+Last session: 2026-03-11T05:02:55.703Z
+Stopped at: Checkpoint: 02-02 Task 3 human-verify — awaiting end-to-end form flow verification
 Resume file: None
