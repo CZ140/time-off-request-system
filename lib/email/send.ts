@@ -6,8 +6,6 @@ import 'server-only'
 
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 interface SendEmailArgs {
   to: string | string[]
   subject: string
@@ -15,6 +13,9 @@ interface SendEmailArgs {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailArgs) {
+  // Instantiate inside the function to defer API key access until runtime.
+  // Top-level instantiation throws during Next.js build if RESEND_API_KEY is absent.
+  const resend = new Resend(process.env.RESEND_API_KEY)
   return resend.emails.send({
     from: process.env.RESEND_FROM ?? 'Time Off System <noreply@example.com>',
     to,
