@@ -1,9 +1,11 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/send'
 import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
+import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
 
 export type FormState = {
@@ -105,17 +107,21 @@ export async function submitRequest(
   let outcome: 'pending' | 'auto_denied' = 'pending'
   try {
     const supabase = createClient()
-    const { error: dbError } = await supabase.from('requests').insert({
-      teacher_name,
-      teacher_email,
-      start_date,
-      end_date,
-      leave_type,
-      is_blackout,
-      reason,
-      status,
-    })
-    if (dbError) return { message: 'Something went wrong. Please try again.' }
+    const { data: inserted, error: dbError } = await supabase
+      .from('requests')
+      .insert({
+        teacher_name,
+        teacher_email,
+        start_date,
+        end_date,
+        leave_type,
+        is_blackout,
+        reason,
+        status,
+      })
+      .select('id')
+      .single()
+    if (dbError || !inserted) return { message: 'Something went wrong. Please try again.' }
 
     // Send auto-denial email ONLY for blackout submissions, ONLY AFTER successful DB insert
     if (is_blackout) {
@@ -129,6 +135,28 @@ export async function submitRequest(
           endDate: end_date,
         }),
       })
+    }
+
+    if (!is_blackout) {
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
+      const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
+      const batch = adminEmails.map(adminEmail => ({
+        from: process.env.RESEND_FROM ?? 'Time Off System <noreply@example.com>',
+        to: [adminEmail],
+        subject: `New leave request: ${teacher_name}`,
+        html: adminNotificationTemplate({
+          teacherName: teacher_name,
+          teacherEmail: teacher_email,
+          leaveType: leave_type,
+          startDate: start_date,
+          endDate: end_date,
+          reason,
+          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${process.env.APPROVAL_SECRET}&admin=${encodeURIComponent(adminEmail)}`,
+          denyUrl: `${base}/api/approve?action=deny&id=${inserted.id}&token=${process.env.APPROVAL_SECRET}&admin=${encodeURIComponent(adminEmail)}`,
+        }),
+      }))
+      await resend.batch.send(batch)
     }
 
     outcome = status
