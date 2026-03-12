@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-email-approval-workflow 03-01-PLAN.md
-last_updated: "2026-03-12T02:50:13.506Z"
+stopped_at: Completed 03-email-approval-workflow 03-03-PLAN.md
+last_updated: "2026-03-12T02:55:38.509Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 8
   percent: 0
 ---
 
@@ -56,6 +56,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-teacher-form-and-auto-denial P01 | 5 | 2 tasks | 3 files |
 | Phase 02-teacher-form-and-auto-denial P02 | 8 | 2 tasks | 3 files |
 | Phase 03-email-approval-workflow P01 | 4 | 3 tasks | 4 files |
+| Phase 03-email-approval-workflow P02 | 2 | 2 tasks | 2 files |
+| Phase 03-email-approval-workflow P03 | 10 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -84,6 +86,11 @@ Recent decisions affecting current work:
 - [Phase 03-email-approval-workflow]: utils.ts is canonical source for formatDate/LEAVE_TYPE_LABELS; auto-denial.ts keeps local copies per plan spec
 - [Phase 03-email-approval-workflow]: Approval email takes zero args — minimal, no dates or admin attribution
 - [Phase 03-email-approval-workflow]: Denial email echoes dates and leave type but has no next-steps guidance — denial is final
+- [Phase 03-email-approval-workflow]: Resend instantiated inside submitRequest function body (not module scope) to defer API key access to runtime
+- [Phase 03-email-approval-workflow]: batch.send() errors bubble to outer catch block — no inner try/catch wrapping that would swallow email failures
+- [Phase 03-email-approval-workflow]: NEXT_PUBLIC_ prefix intentional for BASE_URL — app public URL is not secret; .env.example documents the SEC-02 exception
+- [Phase 03-email-approval-workflow]: Used .single<RequestRow>() explicit generic to fix supabase-js {} type inference in approve route handler
+- [Phase 03-email-approval-workflow]: NextResponse.redirect() used throughout approve handler — never throw-based redirect() from next/navigation
 
 ### Pending Todos
 
@@ -96,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T02:50:13.502Z
-Stopped at: Completed 03-email-approval-workflow 03-01-PLAN.md
+Last session: 2026-03-12T02:55:38.501Z
+Stopped at: Completed 03-email-approval-workflow 03-03-PLAN.md
 Resume file: None

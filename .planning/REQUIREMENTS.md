@@ -17,7 +17,7 @@
 
 - [x] **REQ-01**: All submissions are saved to the `requests` table in Supabase
 - [x] **REQ-02**: Blackout-flagged requests are immediately set to `auto_denied` status — no admin email sent
-- [ ] **REQ-03**: Non-blackout requests are set to `pending` status and trigger admin notification email
+- [x] **REQ-03**: Non-blackout requests are set to `pending` status and trigger admin notification email
 
 ### Email Notifications
 
@@ -28,10 +28,10 @@
 
 ### Approval Workflow
 
-- [ ] **APPR-01**: Approval API validates `APPROVAL_SECRET` token on every inbound request
-- [ ] **APPR-02**: Approval API returns a friendly "already reviewed" page if request status is not `pending` (idempotency guard)
-- [ ] **APPR-03**: Approval action updates `status`, `reviewed_at`, and `reviewed_by` (admin email passed as query param)
-- [ ] **APPR-04**: Teacher confirmation email is sent only after a successful DB status update
+- [x] **APPR-01**: Approval API validates `APPROVAL_SECRET` token on every inbound request
+- [x] **APPR-02**: Approval API returns a friendly "already reviewed" page if request status is not `pending` (idempotency guard)
+- [x] **APPR-03**: Approval action updates `status`, `reviewed_at`, and `reviewed_by` (admin email passed as query param)
+- [x] **APPR-04**: Teacher confirmation email is sent only after a successful DB status update
 
 ### Admin Dashboard
 
@@ -93,12 +93,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REQ-01 | Phase 2 | Complete |
 | REQ-02 | Phase 2 | Complete |
 | EMAIL-01 | Phase 2 | Complete |
-| REQ-03 | Phase 3 | Pending |
+| REQ-03 | Phase 3 | Complete |
 | EMAIL-02 | Phase 3 | Complete |
-| APPR-01 | Phase 3 | Pending |
-| APPR-02 | Phase 3 | Pending |
-| APPR-03 | Phase 3 | Pending |
-| APPR-04 | Phase 3 | Pending |
+| APPR-01 | Phase 3 | Complete |
+| APPR-02 | Phase 3 | Complete |
+| APPR-03 | Phase 3 | Complete |
+| APPR-04 | Phase 3 | Complete |
 | EMAIL-03 | Phase 3 | Complete |
 | EMAIL-04 | Phase 3 | Complete |
 | ADMIN-01 | Phase 4 | Pending |
