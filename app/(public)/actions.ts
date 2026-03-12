@@ -152,8 +152,8 @@ export async function submitRequest(
           startDate: start_date,
           endDate: end_date,
           reason,
-          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${process.env.APPROVAL_SECRET}&admin=${encodeURIComponent(adminEmail)}`,
-          denyUrl: `${base}/api/approve?action=deny&id=${inserted.id}&token=${process.env.APPROVAL_SECRET}&admin=${encodeURIComponent(adminEmail)}`,
+          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${encodeURIComponent(process.env.APPROVAL_SECRET ?? '')}&admin=${encodeURIComponent(adminEmail)}`,
+          denyUrl: `${base}/api/approve?action=deny&id=${inserted.id}&token=${encodeURIComponent(process.env.APPROVAL_SECRET ?? '')}&admin=${encodeURIComponent(adminEmail)}`,
         }),
       }))
       await resend.batch.send(batch)
