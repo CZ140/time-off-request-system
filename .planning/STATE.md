@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-email-approval-workflow 03-04-PLAN.md
-last_updated: "2026-03-12T02:56:35.528Z"
+stopped_at: Completed 03-email-approval-workflow 03-05-PLAN.md
+last_updated: "2026-03-12T22:17:35.682Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-email-approval-workflow P02 | 2 | 2 tasks | 2 files |
 | Phase 03-email-approval-workflow P03 | 10 | 1 tasks | 1 files |
 | Phase 03-email-approval-workflow P04 | 4 | 2 tasks | 2 files |
+| Phase 03-email-approval-workflow P05 | 5 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,7 @@ Recent decisions affecting current work:
 - [Phase 03-email-approval-workflow]: Used .single<RequestRow>() explicit generic to fix supabase-js {} type inference in approve route handler
 - [Phase 03-email-approval-workflow]: NextResponse.redirect() used throughout approve handler — never throw-based redirect() from next/navigation
 - [Phase 03-email-approval-workflow]: formatDate and LEAVE_TYPE_LABELS defined inline in reviewed/page.tsx per plan spec (no shared import)
+- [Phase 03-email-approval-workflow]: APPROVAL_SECRET must be URL-encoded in approval URLs — encodeURIComponent() required; raw embedding breaks token validation when secret contains URL-unsafe characters
 
 ### Pending Todos
 
@@ -105,6 +107,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T02:56:35.521Z
-Stopped at: Completed 03-email-approval-workflow 03-04-PLAN.md
+Last session: 2026-03-12T22:17:35.678Z
+Stopped at: Completed 03-email-approval-workflow 03-05-PLAN.md
 Resume file: None

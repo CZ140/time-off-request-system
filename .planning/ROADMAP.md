@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Project scaffold, database schema, lib modules, and security conventions established
 - [ ] **Phase 2: Teacher Form and Auto-Denial** - Public submission form with validation, DB write, and blackout auto-denial flow
-- [ ] **Phase 3: Email Approval Workflow** - Admin notification emails and tokenized approve/deny Route Handler with idempotency
+- [x] **Phase 3: Email Approval Workflow** - Admin notification emails and tokenized approve/deny Route Handler with idempotency (completed 2026-03-12)
 - [ ] **Phase 4: Admin Dashboard** - Password-protected dashboard with requests table and blackout date CRUD
 - [ ] **Phase 5: Polish and Pre-Launch Hardening** - Edge case handling, email deliverability verification, security audit, UX gaps
 
@@ -102,6 +102,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/3 | In Progress|  |
 | 2. Teacher Form and Auto-Denial | 1/2 | In Progress|  |
-| 3. Email Approval Workflow | 4/5 | In Progress|  |
+| 3. Email Approval Workflow | 5/5 | Complete   | 2026-03-12 |
 | 4. Admin Dashboard | 0/? | Not started | - |
 | 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
