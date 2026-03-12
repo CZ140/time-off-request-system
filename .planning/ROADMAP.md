@@ -102,6 +102,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/3 | In Progress|  |
 | 2. Teacher Form and Auto-Denial | 1/2 | In Progress|  |
-| 3. Email Approval Workflow | 3/5 | In Progress|  |
+| 3. Email Approval Workflow | 4/5 | In Progress|  |
 | 4. Admin Dashboard | 0/? | Not started | - |
 | 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
