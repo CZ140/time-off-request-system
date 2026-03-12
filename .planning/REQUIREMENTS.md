@@ -22,9 +22,9 @@
 ### Email Notifications
 
 - [x] **EMAIL-01**: Auto-denied teacher receives email explaining their dates fall on a blackout period
-- [ ] **EMAIL-02**: All admin addresses (from `ADMIN_EMAILS` env var) receive request details with tokenized Approve and Deny buttons
-- [ ] **EMAIL-03**: Teacher receives a warm approval confirmation email with their dates and leave type
-- [ ] **EMAIL-04**: Teacher receives a respectful denial email with their dates and leave type
+- [x] **EMAIL-02**: All admin addresses (from `ADMIN_EMAILS` env var) receive request details with tokenized Approve and Deny buttons
+- [x] **EMAIL-03**: Teacher receives a warm approval confirmation email with their dates and leave type
+- [x] **EMAIL-04**: Teacher receives a respectful denial email with their dates and leave type
 
 ### Approval Workflow
 
@@ -94,13 +94,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REQ-02 | Phase 2 | Complete |
 | EMAIL-01 | Phase 2 | Complete |
 | REQ-03 | Phase 3 | Pending |
-| EMAIL-02 | Phase 3 | Pending |
+| EMAIL-02 | Phase 3 | Complete |
 | APPR-01 | Phase 3 | Pending |
 | APPR-02 | Phase 3 | Pending |
 | APPR-03 | Phase 3 | Pending |
 | APPR-04 | Phase 3 | Pending |
-| EMAIL-03 | Phase 3 | Pending |
-| EMAIL-04 | Phase 3 | Pending |
+| EMAIL-03 | Phase 3 | Complete |
+| EMAIL-04 | Phase 3 | Complete |
 | ADMIN-01 | Phase 4 | Pending |
 | ADMIN-02 | Phase 4 | Pending |
 | ADMIN-03 | Phase 4 | Pending |
