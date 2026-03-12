@@ -11,7 +11,7 @@
 - [x] **FORM-02**: Form displays inline validation errors for all required fields before submission
 - [x] **FORM-03**: Submit button is disabled on click to prevent duplicate submissions
 - [x] **FORM-04**: Form rejects end dates before start date and start dates in the past
-- [ ] **FORM-05**: Teacher is redirected to a confirmation page after successful submission
+- [x] **FORM-05**: Teacher is redirected to a confirmation page after successful submission
 
 ### Request Processing
 
@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORM-02 | Phase 2 | Complete |
 | FORM-03 | Phase 2 | Complete |
 | FORM-04 | Phase 2 | Complete |
-| FORM-05 | Phase 2 | Pending |
+| FORM-05 | Phase 2 | Complete |
 | REQ-01 | Phase 2 | Complete |
 | REQ-02 | Phase 2 | Complete |
 | EMAIL-01 | Phase 2 | Complete |

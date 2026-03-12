@@ -61,7 +61,14 @@ Plans:
   2. Clicking an Approve or Deny link validates the `APPROVAL_SECRET` token, updates the request status in the database, and sends the teacher a confirmation email
   3. Clicking an approval link a second time (or with the wrong token) does not change any data and returns a friendly "already reviewed" page instead of an error
   4. Teacher receives a warm approval or respectful denial email only after the database update succeeds — never before
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Email shared utils and three new templates (admin notification, approval confirmation, denial confirmation)
+- [ ] 03-02-PLAN.md — Update submitRequest server action to send batch admin emails for non-blackout submissions
+- [ ] 03-03-PLAN.md — Implement /api/approve GET route handler (token validation, idempotency, DB update, teacher email)
+- [ ] 03-04-PLAN.md — Create /reviewed and /invalid pages for approval link landing
+- [ ] 03-05-PLAN.md — Pre-flight build check and full end-to-end smoke test checkpoint
 
 ### Phase 4: Admin Dashboard
 **Goal**: Admins can review the full request history in a filterable table and manage blackout date ranges, all behind a password-protected page that is safe from middleware bypass attacks
@@ -95,6 +102,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/3 | In Progress|  |
 | 2. Teacher Form and Auto-Denial | 1/2 | In Progress|  |
-| 3. Email Approval Workflow | 0/? | Not started | - |
+| 3. Email Approval Workflow | 0/5 | Not started | - |
 | 4. Admin Dashboard | 0/? | Not started | - |
 | 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
