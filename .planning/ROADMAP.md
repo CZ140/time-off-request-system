@@ -79,7 +79,13 @@ Plans:
   2. Admin auth is verified in both middleware and the admin layout, so the dashboard cannot be accessed by sending an `x-middleware-subrequest` bypass header
   3. Requests tab shows all requests with the correct columns, color-coded status badges, and allows filtering by status and sorting by any column header
   4. Blackout Dates tab lists all date ranges and allows adding a new range (label, start date, end date) and deleting any existing range
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Middleware session gate, protected layout (CVE-2025-29927 dual-check), login page UI and Server Action (ADMIN-01, ADMIN-02)
+- [ ] 04-02-PLAN.md — Admin dashboard server page, TabSwitcher, and RequestsTab with filter pills and sortable columns (ADMIN-03, ADMIN-04, ADMIN-05)
+- [ ] 04-03-PLAN.md — Blackout date Server Actions (logout, add, delete) and BlackoutDatesTab with inline confirm (ADMIN-06, ADMIN-07, ADMIN-08)
+- [ ] 04-04-PLAN.md — Final build gate and manual smoke test checkpoint (all ADMIN requirements)
 
 ### Phase 5: Polish and Pre-Launch Hardening
 **Goal**: The system is ready for real use — edge cases are handled gracefully, emails are deliverable, and no security property can be violated by normal or adversarial use
@@ -103,5 +109,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 2/3 | In Progress|  |
 | 2. Teacher Form and Auto-Denial | 1/2 | In Progress|  |
 | 3. Email Approval Workflow | 5/5 | Complete   | 2026-03-12 |
-| 4. Admin Dashboard | 0/? | Not started | - |
+| 4. Admin Dashboard | 0/4 | Not started | - |
 | 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
