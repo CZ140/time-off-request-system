@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: "Checkpoint reached: 05-02 Task 3 human-verify smoke test"
-last_updated: "2026-03-13T20:33:10.143Z"
+stopped_at: Completed 05-02-PLAN.md — Phase 5 complete
+last_updated: "2026-03-13T22:58:56.179Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-admin-dashboard P03 | 8 | 2 tasks | 2 files |
 | Phase 04-admin-dashboard P04 | 5 | 2 tasks | 1 files |
 | Phase 05-polish-and-pre-launch-hardening P01 | 2 | 2 tasks | 2 files |
+| Phase 05-polish-and-pre-launch-hardening P02 | 15 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,9 @@ Recent decisions affecting current work:
 - [Phase 05-polish-and-pre-launch-hardening]: Admin dashboard try/catch converts Supabase error values to thrown exceptions; fetchError flag renders inline error paragraph instead of crashing with 500
 - [Phase 05-polish-and-pre-launch-hardening]: Grep targets .next/static only (not .next/ root) — server bundle legitimately contains secret names in server-side code
 - [Phase 05-polish-and-pre-launch-hardening]: Resend DNS checklist placed as comments in .env.example co-located with RESEND_* variables for discoverability
+- [Phase 05-polish-and-pre-launch-hardening]: Grep targets .next/static only (not .next/ root) — .next/server/ legitimately contains secret names in server-side code
+- [Phase 05-polish-and-pre-launch-hardening]: FOUND flag mechanism checks all secrets before exiting so operator sees every leaked name in one run
+- [Phase 05-polish-and-pre-launch-hardening]: Resend DNS checklist placed as comments in .env.example co-located with RESEND_* variables for discoverability
 
 ### Pending Todos
 
@@ -124,6 +128,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T20:33:02.916Z
-Stopped at: Checkpoint reached: 05-02 Task 3 human-verify smoke test
+Last session: 2026-03-13T22:58:56.175Z
+Stopped at: Completed 05-02-PLAN.md — Phase 5 complete
 Resume file: None
