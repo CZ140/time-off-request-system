@@ -35,8 +35,8 @@
 
 ### Admin Dashboard
 
-- [ ] **ADMIN-01**: Dashboard is protected by a password stored in `ADMIN_PASSWORD` env var with httpOnly cookie session
-- [ ] **ADMIN-02**: Admin auth is verified in both middleware and the admin layout (CVE-2025-29927 mitigation)
+- [x] **ADMIN-01**: Dashboard is protected by a password stored in `ADMIN_PASSWORD` env var with httpOnly cookie session
+- [x] **ADMIN-02**: Admin auth is verified in both middleware and the admin layout (CVE-2025-29927 mitigation)
 - [ ] **ADMIN-03**: Requests tab shows all requests with columns: Teacher Name, Email, Leave Type, Start Date, End Date, Reason, Blackout?, Status (color-coded badge), Submitted Date, Reviewed By
 - [ ] **ADMIN-04**: Requests table is filterable by status (All / Pending / Approved / Denied / Auto-Denied)
 - [ ] **ADMIN-05**: Requests table columns are sortable by clicking column headers
@@ -101,8 +101,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APPR-04 | Phase 3 | Complete |
 | EMAIL-03 | Phase 3 | Complete |
 | EMAIL-04 | Phase 3 | Complete |
-| ADMIN-01 | Phase 4 | Pending |
-| ADMIN-02 | Phase 4 | Pending |
+| ADMIN-01 | Phase 4 | Complete |
+| ADMIN-02 | Phase 4 | Complete |
 | ADMIN-03 | Phase 4 | Pending |
 | ADMIN-04 | Phase 4 | Pending |
 | ADMIN-05 | Phase 4 | Pending |
