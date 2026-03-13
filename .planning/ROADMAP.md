@@ -97,7 +97,11 @@ Plans:
   3. Resend sending domain has verified SPF/DKIM DNS records and a test email delivers to an inbox (not spam)
   4. No secret environment variable appears in any client bundle (verified via build output inspection)
   5. Submitting the public form multiple times rapidly does not create duplicate `pending` requests or send duplicate admin emails
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Server-side code hardening: duplicate submission guard and admin dashboard error fallback
+- [ ] 05-02-PLAN.md — Bundle secret verification script, Resend DNS docs, and final smoke test checkpoint
 
 ## Progress
 
@@ -110,4 +114,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Teacher Form and Auto-Denial | 1/2 | In Progress|  |
 | 3. Email Approval Workflow | 5/5 | Complete   | 2026-03-12 |
 | 4. Admin Dashboard | 4/4 | Complete   | 2026-03-13 |
-| 5. Polish and Pre-Launch Hardening | 0/? | Not started | - |
+| 5. Polish and Pre-Launch Hardening | 0/2 | Not started | - |
