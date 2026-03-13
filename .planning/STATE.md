@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-13T20:01:14.000Z"
+stopped_at: Completed 05-polish-and-pre-launch-hardening-01-PLAN.md
+last_updated: "2026-03-13T20:29:19.220Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 16
+  completed_plans: 15
   percent: 0
 ---
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-admin-dashboard P02 | 8 | 2 tasks | 5 files |
 | Phase 04-admin-dashboard P03 | 8 | 2 tasks | 2 files |
 | Phase 04-admin-dashboard P04 | 5 | 2 tasks | 1 files |
+| Phase 05-polish-and-pre-launch-hardening P01 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,8 @@ Recent decisions affecting current work:
 - [Phase 04-admin-dashboard]: deleteBlackoutDate is best-effort (errors not surfaced) — router.refresh() will reflect actual DB state
 - [Phase 04-admin-dashboard]: formKey increment re-mounts entire form element to clear all uncontrolled inputs on successful add
 - [Phase 04-admin-dashboard]: submitted_at stores ISO timestamp not plain date string — formatDate() incompatible, parse via new Date() directly in RequestsTab
+- [Phase 05-polish-and-pre-launch-hardening]: supabase client hoisted before try/catch in submitRequest so duplicate guard and insert share one instance; .maybeSingle() used for duplicate check to avoid error on zero rows
+- [Phase 05-polish-and-pre-launch-hardening]: Admin dashboard try/catch converts Supabase error values to thrown exceptions; fetchError flag renders inline error paragraph instead of crashing with 500
 
 ### Pending Todos
 
@@ -119,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T20:01:13.995Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-polish-and-pre-launch-hardening/05-CONTEXT.md
+Last session: 2026-03-13T20:29:19.215Z
+Stopped at: Completed 05-polish-and-pre-launch-hardening-01-PLAN.md
+Resume file: None
