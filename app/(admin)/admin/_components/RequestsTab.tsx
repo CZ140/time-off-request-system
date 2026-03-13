@@ -130,7 +130,7 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
                         {badge.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{formatDate(row.submitted_at)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{new Date(row.submitted_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.reviewed_by ?? '—'}</td>
                   </tr>
                 )
