@@ -40,9 +40,9 @@
 - [x] **ADMIN-03**: Requests tab shows all requests with columns: Teacher Name, Email, Leave Type, Start Date, End Date, Reason, Blackout?, Status (color-coded badge), Submitted Date, Reviewed By
 - [x] **ADMIN-04**: Requests table is filterable by status (All / Pending / Approved / Denied / Auto-Denied)
 - [x] **ADMIN-05**: Requests table columns are sortable by clicking column headers
-- [ ] **ADMIN-06**: Blackout Dates tab shows all date ranges with label, start date, and end date
-- [ ] **ADMIN-07**: Admin can add a blackout date range with a label, start date, and end date
-- [ ] **ADMIN-08**: Admin can delete any blackout date range
+- [x] **ADMIN-06**: Blackout Dates tab shows all date ranges with label, start date, and end date
+- [x] **ADMIN-07**: Admin can add a blackout date range with a label, start date, and end date
+- [x] **ADMIN-08**: Admin can delete any blackout date range
 
 ### Security
 
@@ -106,9 +106,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADMIN-03 | Phase 4 | Complete |
 | ADMIN-04 | Phase 4 | Complete |
 | ADMIN-05 | Phase 4 | Complete |
-| ADMIN-06 | Phase 4 | Pending |
-| ADMIN-07 | Phase 4 | Pending |
-| ADMIN-08 | Phase 4 | Pending |
+| ADMIN-06 | Phase 4 | Complete |
+| ADMIN-07 | Phase 4 | Complete |
+| ADMIN-08 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 26 total

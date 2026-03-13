@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-admin-dashboard 04-02-PLAN.md
-last_updated: "2026-03-13T04:10:56.904Z"
+stopped_at: Completed 04-admin-dashboard 04-03-PLAN.md
+last_updated: "2026-03-13T04:14:58.738Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-email-approval-workflow P05 | 5 | 2 tasks | 1 files |
 | Phase 04-admin-dashboard P01 | 3 | 3 tasks | 6 files |
 | Phase 04-admin-dashboard P02 | 8 | 2 tasks | 5 files |
+| Phase 04-admin-dashboard P03 | 8 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,8 @@ Recent decisions affecting current work:
 - [Phase 04-admin-dashboard]: Supabase query results cast to explicit RequestRow[]/BlackoutDateRow[] via 'as' — same {} inference issue as Phase 03
 - [Phase 04-admin-dashboard]: Filter pill values use RequestStatus DB literals ('auto_denied') not display strings to prevent filter mismatch
 - [Phase 04-admin-dashboard]: String(value ?? '') for null-safe sort on nullable reason and reviewed_by columns
+- [Phase 04-admin-dashboard]: deleteBlackoutDate is best-effort (errors not surfaced) — router.refresh() will reflect actual DB state
+- [Phase 04-admin-dashboard]: formKey increment re-mounts entire form element to clear all uncontrolled inputs on successful add
 
 ### Pending Todos
 
@@ -114,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T04:10:56.899Z
-Stopped at: Completed 04-admin-dashboard 04-02-PLAN.md
+Last session: 2026-03-13T04:14:58.733Z
+Stopped at: Completed 04-admin-dashboard 04-03-PLAN.md
 Resume file: None
