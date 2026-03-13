@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-polish-and-pre-launch-hardening-01-PLAN.md
-last_updated: "2026-03-13T20:29:19.220Z"
+stopped_at: "Checkpoint reached: 05-02 Task 3 human-verify smoke test"
+last_updated: "2026-03-13T20:33:10.143Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -110,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 04-admin-dashboard]: submitted_at stores ISO timestamp not plain date string — formatDate() incompatible, parse via new Date() directly in RequestsTab
 - [Phase 05-polish-and-pre-launch-hardening]: supabase client hoisted before try/catch in submitRequest so duplicate guard and insert share one instance; .maybeSingle() used for duplicate check to avoid error on zero rows
 - [Phase 05-polish-and-pre-launch-hardening]: Admin dashboard try/catch converts Supabase error values to thrown exceptions; fetchError flag renders inline error paragraph instead of crashing with 500
+- [Phase 05-polish-and-pre-launch-hardening]: Grep targets .next/static only (not .next/ root) — server bundle legitimately contains secret names in server-side code
+- [Phase 05-polish-and-pre-launch-hardening]: Resend DNS checklist placed as comments in .env.example co-located with RESEND_* variables for discoverability
 
 ### Pending Todos
 
@@ -122,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T20:29:19.215Z
-Stopped at: Completed 05-polish-and-pre-launch-hardening-01-PLAN.md
+Last session: 2026-03-13T20:33:02.916Z
+Stopped at: Checkpoint reached: 05-02 Task 3 human-verify smoke test
 Resume file: None
