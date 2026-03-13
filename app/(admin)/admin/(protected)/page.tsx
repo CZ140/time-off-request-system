@@ -8,14 +8,22 @@ type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
 
 export default async function AdminDashboardPage() {
   const supabase = createClient()
+  let requests: RequestRow[] = []
+  let blackoutDates: BlackoutDateRow[] = []
+  let fetchError = false
 
-  const [{ data: requestsRaw }, { data: blackoutDatesRaw }] = await Promise.all([
-    supabase.from('requests').select('*').order('submitted_at', { ascending: false }),
-    supabase.from('blackout_dates').select('*').order('start_date', { ascending: true }),
-  ])
-
-  const requests = (requestsRaw ?? []) as RequestRow[]
-  const blackoutDates = (blackoutDatesRaw ?? []) as BlackoutDateRow[]
+  try {
+    const [{ data: requestsRaw, error: reqErr }, { data: blackoutDatesRaw, error: bdErr }] =
+      await Promise.all([
+        supabase.from('requests').select('*').order('submitted_at', { ascending: false }),
+        supabase.from('blackout_dates').select('*').order('start_date', { ascending: true }),
+      ])
+    if (reqErr || bdErr) throw new Error('db')
+    requests = (requestsRaw ?? []) as RequestRow[]
+    blackoutDates = (blackoutDatesRaw ?? []) as BlackoutDateRow[]
+  } catch {
+    fetchError = true
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,6 +39,9 @@ export default async function AdminDashboardPage() {
         </form>
       </header>
       <main className="px-6 py-6">
+        {fetchError && (
+          <p className="mb-4 text-sm text-red-600">Unable to load data. Please refresh.</p>
+        )}
         <TabSwitcher
           requests={requests}
           blackoutDates={blackoutDates}
