@@ -37,9 +37,9 @@
 
 - [x] **ADMIN-01**: Dashboard is protected by a password stored in `ADMIN_PASSWORD` env var with httpOnly cookie session
 - [x] **ADMIN-02**: Admin auth is verified in both middleware and the admin layout (CVE-2025-29927 mitigation)
-- [ ] **ADMIN-03**: Requests tab shows all requests with columns: Teacher Name, Email, Leave Type, Start Date, End Date, Reason, Blackout?, Status (color-coded badge), Submitted Date, Reviewed By
-- [ ] **ADMIN-04**: Requests table is filterable by status (All / Pending / Approved / Denied / Auto-Denied)
-- [ ] **ADMIN-05**: Requests table columns are sortable by clicking column headers
+- [x] **ADMIN-03**: Requests tab shows all requests with columns: Teacher Name, Email, Leave Type, Start Date, End Date, Reason, Blackout?, Status (color-coded badge), Submitted Date, Reviewed By
+- [x] **ADMIN-04**: Requests table is filterable by status (All / Pending / Approved / Denied / Auto-Denied)
+- [x] **ADMIN-05**: Requests table columns are sortable by clicking column headers
 - [ ] **ADMIN-06**: Blackout Dates tab shows all date ranges with label, start date, and end date
 - [ ] **ADMIN-07**: Admin can add a blackout date range with a label, start date, and end date
 - [ ] **ADMIN-08**: Admin can delete any blackout date range
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EMAIL-04 | Phase 3 | Complete |
 | ADMIN-01 | Phase 4 | Complete |
 | ADMIN-02 | Phase 4 | Complete |
-| ADMIN-03 | Phase 4 | Pending |
-| ADMIN-04 | Phase 4 | Pending |
-| ADMIN-05 | Phase 4 | Pending |
+| ADMIN-03 | Phase 4 | Complete |
+| ADMIN-04 | Phase 4 | Complete |
+| ADMIN-05 | Phase 4 | Complete |
 | ADMIN-06 | Phase 4 | Pending |
 | ADMIN-07 | Phase 4 | Pending |
 | ADMIN-08 | Phase 4 | Pending |
