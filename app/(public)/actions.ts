@@ -102,11 +102,28 @@ export async function submitRequest(
   // 3. Determine status
   const status: RequestStatus = is_blackout ? 'auto_denied' : 'pending'
 
+  // Duplicate guard: query for a matching row submitted within the last 60 seconds.
+  // Covers both blackout and non-blackout submissions.
+  // redirect() here is outside try/catch — NEXT_REDIRECT propagates correctly.
+  const supabase = createClient()
+  const windowStart = new Date(Date.now() - 60_000).toISOString()
+  const { data: duplicate } = await supabase
+    .from('requests')
+    .select('id')
+    .eq('teacher_email', teacher_email)
+    .eq('start_date', start_date)
+    .eq('end_date', end_date)
+    .gte('submitted_at', windowStart)
+    .maybeSingle()
+
+  if (duplicate) {
+    redirect(`/confirmation?status=${status}`)
+  }
+
   // 4 & 5. Insert into Supabase and send auto-denial email if applicable.
   // Capture outcome before try/catch so redirect can use it after.
   let outcome: 'pending' | 'auto_denied' = 'pending'
   try {
-    const supabase = createClient()
     const { data: inserted, error: dbError } = await supabase
       .from('requests')
       .insert({
