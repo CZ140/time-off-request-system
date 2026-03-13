@@ -9,10 +9,13 @@ type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
 export default async function AdminDashboardPage() {
   const supabase = createClient()
 
-  const [{ data: requests }, { data: blackoutDates }] = await Promise.all([
+  const [{ data: requestsRaw }, { data: blackoutDatesRaw }] = await Promise.all([
     supabase.from('requests').select('*').order('submitted_at', { ascending: false }),
     supabase.from('blackout_dates').select('*').order('start_date', { ascending: true }),
   ])
+
+  const requests = (requestsRaw ?? []) as RequestRow[]
+  const blackoutDates = (blackoutDatesRaw ?? []) as BlackoutDateRow[]
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,8 +32,8 @@ export default async function AdminDashboardPage() {
       </header>
       <main className="px-6 py-6">
         <TabSwitcher
-          requests={requests ?? []}
-          blackoutDates={blackoutDates ?? []}
+          requests={requests}
+          blackoutDates={blackoutDates}
         />
       </main>
     </div>
