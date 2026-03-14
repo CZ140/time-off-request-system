@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: planning
 stopped_at: Completed 05-02-PLAN.md — Phase 5 complete
-last_updated: "2026-03-13T23:04:22.139Z"
+last_updated: "2026-03-13T23:59:28.479Z"
 last_activity: 2026-03-10 — Roadmap created
 progress:
   total_phases: 5
@@ -18,19 +18,18 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-10)
+See: .planning/PROJECT.md (updated 2026-03-13)
 
 **Core value:** Teachers can submit leave requests from any device and administrators can approve or deny them from their inbox — no login required for either party.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** v1.0 shipped — planning next milestone
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-10 — Roadmap created
+Phase: 5 of 5 — ALL COMPLETE
+Status: v1.0 milestone shipped 2026-03-13
+Last activity: 2026-03-13 — v1.0 milestone complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -123,8 +122,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Pre-Phase 1]: Next.js 14 vs 15 — user confirmed 15; ensure `await cookies()` pattern is used throughout
-- [Pre-Phase 3]: `ADMIN_EMAILS` multi-address parsing — use Resend `batch.send()` for correct multi-recipient handling
+None — v1.0 shipped cleanly.
 
 ## Session Continuity
 
