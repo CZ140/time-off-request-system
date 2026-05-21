@@ -200,8 +200,8 @@ export async function submitRequest(
           startDate: start_date,
           endDate: end_date,
           reason,
-          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${approveToken}&admin=${encodeURIComponent(adminEmail)}`,
-          denyUrl:    `${base}/api/approve?action=deny&id=${inserted.id}&token=${denyToken}&admin=${encodeURIComponent(adminEmail)}`,
+          approveUrl: `${base}/approve/${inserted.id}?action=approve&token=${approveToken}&admin=${encodeURIComponent(adminEmail)}`,
+          denyUrl:    `${base}/approve/${inserted.id}?action=deny&token=${denyToken}&admin=${encodeURIComponent(adminEmail)}`,
         }),
       })))
     } catch (emailErr) {
