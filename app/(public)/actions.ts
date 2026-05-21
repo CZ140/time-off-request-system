@@ -8,6 +8,10 @@ import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
 
+// Validates email structure: requires local-part, @, domain, dot, TLD — no whitespace.
+// Simple regex intentionally: catches obvious invalids without over-constraining exotic valid addresses.
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export type FormState = {
   errors?: {
     teacher_name?: string[]
@@ -53,6 +57,8 @@ export async function submitRequest(
 
   if (!teacher_email?.trim()) {
     errors.teacher_email = ['Work email is required.']
+  } else if (!EMAIL_REGEX.test(teacher_email)) {
+    errors.teacher_email = ['Please enter a valid email address.']
   }
 
   if (!start_date) {
