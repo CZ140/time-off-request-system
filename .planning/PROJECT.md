@@ -8,6 +8,18 @@ A web application that lets teachers submit time-off requests and routes them to
 
 Teachers can submit leave requests from any device and administrators can approve or deny them from their inbox — no login required for either party.
 
+## Current Milestone: v1.1 Post-Audit Hardening
+
+**Goal:** Close all security, reliability, and code quality gaps identified in the senior audit — no new features, only hardening of what's built.
+
+**Target features:**
+- HMAC-signed approval tokens and server-side blackout enforcement (security correctness)
+- HTTP security headers, email format validation, env var startup validation
+- Orphaned request fix, error surfacing, approval email personalization, sendBatch abstraction
+- Deduplication of shared utilities, package name cleanup
+- Vitest test suite + GitHub Actions CI
+- Admin table reason expand-in-place, end date min attribute
+
 ## Requirements
 
 ### Validated
@@ -22,9 +34,27 @@ Teachers can submit leave requests from any device and administrators can approv
 - ✓ Admin dashboard is protected by a password stored in an environment variable — v1.0
 - ✓ Already-reviewed requests return a friendly "already reviewed" page if an admin clicks again — v1.0
 
-### Active
+### Active (v1.1)
 
-(None — v1.0 delivered all planned requirements. Define new requirements for next milestone with `/gsd:new-milestone`.)
+- [ ] **SEC-01** System enforces blackout dates server-side via DB overlap query, independent of teacher's self-reported value
+- [ ] **SEC-02** Admin approval/denial URLs use HMAC-SHA256 tokens scoped to a specific request ID and action
+- [ ] **SEC-03** Server-side email format validation rejects structurally invalid teacher email addresses
+- [ ] **SEC-04** HTTP security headers applied to all responses (X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- [ ] **SEC-05** Application validates all required env vars at startup and fails with descriptive messages if any are missing
+- [ ] **REL-01** Email failure after successful DB insert logs the request ID and returns a distinct error state rather than orphaning the row
+- [ ] **REL-02** deleteBlackoutDate surfaces DB errors to the admin UI instead of silently swallowing them
+- [ ] **REL-03** Approval confirmation email includes teacher name, leave type, start date, and end date
+- [ ] **REL-04** /reviewed page distinguishes first-time admin action from idempotent re-click via URL flag
+- [ ] **REL-05** All email sending routes through lib/email/send.ts; direct Resend instantiation in Server Actions replaced with sendBatch export
+- [ ] **QUAL-01** LEAVE_TYPE_LABELS and formatDate imported from lib/email/utils.ts everywhere; local copies removed
+- [ ] **QUAL-02** package.json name field updated to remove -temp suffix
+- [ ] **TEST-01** Vitest configured with server-only module mocking
+- [ ] **TEST-02** submitRequest validation logic has unit test coverage for all branches
+- [ ] **TEST-03** HMAC token generation and verification have unit test coverage
+- [ ] **TEST-04** Blackout date overlap detection has unit test coverage
+- [ ] **TEST-05** GitHub Actions CI runs tsc, eslint, and vitest on every push/PR
+- [ ] **UX-01** Reason column in admin table is expandable in-place
+- [ ] **UX-02** End date input min attribute dynamically bound to selected start date
 
 ### Out of Scope
 
@@ -70,4 +100,13 @@ Teachers can submit leave requests from any device and administrators can approv
 | `resend.batch.send()` for multi-admin notification | One API call, one email per admin, unique approve/deny URLs per email | ✓ Good — clean and scalable for small admin counts |
 
 ---
-*Last updated: 2026-03-13 after v1.0 milestone*
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition:** Requirements invalidated → move to Out of Scope. Requirements validated → move to Validated with phase reference. New requirements → add to Active. Decisions to log → add to Key Decisions.
+
+**After each milestone:** Full review of all sections. Core Value check. Audit Out of Scope. Update Context.
+
+---
+*Last updated: 2026-05-21 — v1.1 milestone started (post-audit hardening)*
