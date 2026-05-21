@@ -44,6 +44,7 @@ const COLUMNS: { key: SortColumn; label: string }[] = [
 export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [sort, setSort] = useState<SortState>({ column: 'submitted_at', direction: 'desc' })
+  const [expandedReason, setExpandedReason] = useState<string | null>(null)
 
   function handleColumnClick(column: SortColumn) {
     setSort(prev =>
@@ -123,7 +124,23 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{LEAVE_TYPE_LABELS[row.leave_type]}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{formatDate(row.start_date)}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{formatDate(row.end_date)}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{row.reason ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[200px]">
+                      {row.reason ? (
+                        <button
+                          onClick={() => setExpandedReason(expandedReason === row.id ? null : row.id)}
+                          className="text-left w-full hover:text-gray-900 transition-colors"
+                        >
+                          <span className={expandedReason === row.id ? '' : 'truncate block'}>
+                            {row.reason}
+                          </span>
+                          {row.reason.length > 40 && (
+                            <span className="text-xs text-blue-500 mt-0.5 block">
+                              {expandedReason === row.id ? 'collapse' : 'expand'}
+                            </span>
+                          )}
+                        </button>
+                      ) : '—'}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.is_blackout ? 'Yes' : 'No'}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>

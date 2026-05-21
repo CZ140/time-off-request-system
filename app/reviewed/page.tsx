@@ -1,15 +1,5 @@
 // app/reviewed/page.tsx
-import { formatDate } from '@/lib/email/utils'
-
-const LEAVE_TYPE_LABELS: Record<string, string> = {
-  sick: 'Sick Leave',
-  personal: 'Personal Leave',
-  vacation: 'Vacation',
-  bereavement: 'Bereavement Leave',
-  jury_duty: 'Jury Duty',
-  professional_development: 'Professional Development',
-  maternity_paternity: 'Maternity / Paternity Leave',
-}
+import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | undefined }>
@@ -24,7 +14,7 @@ export default async function ReviewedPage({ searchParams }: Props) {
   const startDate = params.start_date ? formatDate(params.start_date) : '—'
   const endDate = params.end_date ? formatDate(params.end_date) : '—'
   const leaveType = params.leave_type
-    ? (LEAVE_TYPE_LABELS[params.leave_type] ?? params.leave_type)
+    ? (LEAVE_TYPE_LABELS[params.leave_type as keyof typeof LEAVE_TYPE_LABELS] ?? params.leave_type)
     : '—'
   const reviewedBy = params.reviewed_by ?? '—'
 

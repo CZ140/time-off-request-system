@@ -1,35 +1,14 @@
 // lib/email/templates/auto-denial.ts
 // HTML email template for blackout-period auto-denial.
 // Pure function — no server-side I/O. No 'server-only' import needed.
-// Imported by app/(public)/actions.ts which is already server-only.
-
 import type { LeaveType } from '@/types/database'
+import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
 
 export interface AutoDenialTemplateArgs {
   teacherName: string
   leaveType: LeaveType
   startDate: string // ISO date string e.g. "2026-04-15"
   endDate: string
-}
-
-const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
-  sick: 'Sick Leave',
-  personal: 'Personal Leave',
-  vacation: 'Vacation',
-  bereavement: 'Bereavement Leave',
-  jury_duty: 'Jury Duty',
-  professional_development: 'Professional Development',
-  maternity_paternity: 'Maternity / Paternity Leave',
-}
-
-function formatDate(iso: string): string {
-  // Append T00:00:00 to parse as LOCAL time, not UTC midnight.
-  // Without this, US timezones shift the date one day back (e.g. April 15 → April 14).
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
 }
 
 export function autoDenialTemplate({

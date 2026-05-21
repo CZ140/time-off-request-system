@@ -8,6 +8,7 @@ const initialState: FormState = {}
 export default function TeacherFormPage() {
   const [state, formAction, pending] = useActionState(submitRequest, initialState)
   const [isBlackout, setIsBlackout] = useState<string | null>(null)
+  const [startDate, setStartDate] = useState<string>('')
 
   // Compute today's date string for the date input min attribute (client-side UX affordance)
   const today = new Date()
@@ -73,6 +74,7 @@ export default function TeacherFormPage() {
               defaultValue={state.values?.start_date ?? ''}
               aria-describedby={state.errors?.start_date ? 'start_date-error' : undefined}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={(e) => setStartDate(e.target.value)}
             />
             {state.errors?.start_date?.[0] && (
               <p id="start_date-error" className="mt-1 text-sm text-red-600">
@@ -90,6 +92,7 @@ export default function TeacherFormPage() {
               id="end_date"
               type="date"
               name="end_date"
+              min={startDate || todayStr}
               defaultValue={state.values?.end_date ?? ''}
               aria-describedby={state.errors?.end_date ? 'end_date-error' : undefined}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
