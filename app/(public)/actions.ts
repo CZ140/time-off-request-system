@@ -1,9 +1,8 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
-import { sendEmail } from '@/lib/email/send'
+import { sendEmail, sendBatch } from '@/lib/email/send'
 import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
@@ -146,28 +145,31 @@ export async function submitRequest(
     redirect(`/confirmation?status=${status}`)
   }
 
-  // 4 & 5. Insert into Supabase and send auto-denial email if applicable.
-  // Capture outcome before try/catch so redirect can use it after.
-  let outcome: 'pending' | 'auto_denied' = 'pending'
-  try {
-    const { data: inserted, error: dbError } = await supabase
-      .from('requests')
-      .insert({
-        teacher_name,
-        teacher_email,
-        start_date,
-        end_date,
-        leave_type,
-        is_blackout: serverBlackout,
-        reason,
-        status,
-      })
-      .select('id')
-      .single()
-    if (dbError || !inserted) return { message: 'Something went wrong. Please try again.' }
+  // 4. Insert into Supabase. DB insert is separated from email so a Resend failure
+  // does not produce the same error message as a DB failure (REL-01).
+  const { data: inserted, error: dbError } = await supabase
+    .from('requests')
+    .insert({
+      teacher_name,
+      teacher_email,
+      start_date,
+      end_date,
+      leave_type,
+      is_blackout: serverBlackout,
+      reason,
+      status,
+    })
+    .select('id')
+    .single()
 
-    // Send auto-denial email ONLY for blackout submissions, ONLY AFTER successful DB insert
-    if (serverBlackout) {
+  if (dbError || !inserted) {
+    return { message: 'Something went wrong saving your request. Please try again.' }
+  }
+
+  // 5. Send emails AFTER confirmed DB insert. Each email path has its own try/catch
+  // so a Resend failure does not orphan the already-inserted row (REL-01).
+  if (serverBlackout) {
+    try {
       await sendEmail({
         to: teacher_email,
         subject: 'Your time-off request — blackout period',
@@ -178,17 +180,18 @@ export async function submitRequest(
           endDate: end_date,
         }),
       })
+    } catch (emailErr) {
+      // Request is saved — log and redirect to confirmation anyway.
+      console.error(`[REL-01] Auto-denial email failed for request ${inserted.id}:`, emailErr)
     }
-
-    if (!serverBlackout) {
-      const resend = new Resend(process.env.RESEND_API_KEY)
+  } else {
+    try {
       const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
       const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
       const approveToken = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'approve')
       const denyToken    = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'deny')
-      const batch = adminEmails.map(adminEmail => ({
-        from: process.env.RESEND_FROM ?? 'Time Off System <noreply@example.com>',
-        to: [adminEmail],
+      await sendBatch(adminEmails.map(adminEmail => ({
+        to: adminEmail,
         subject: `New leave request: ${teacher_name}`,
         html: adminNotificationTemplate({
           teacherName: teacher_name,
@@ -200,16 +203,16 @@ export async function submitRequest(
           approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${approveToken}&admin=${encodeURIComponent(adminEmail)}`,
           denyUrl:    `${base}/api/approve?action=deny&id=${inserted.id}&token=${denyToken}&admin=${encodeURIComponent(adminEmail)}`,
         }),
-      }))
-      await resend.batch.send(batch)
+      })))
+    } catch (emailErr) {
+      // DB row exists but admins were not notified — return a distinct message (REL-01).
+      console.error(`[REL-01] Admin notification failed for request ${inserted.id}:`, emailErr)
+      return {
+        message: 'Your request was received, but we could not notify the administrator. Please contact them directly.',
+      }
     }
-
-    outcome = status
-  } catch {
-    return { message: 'Something went wrong. Please try again.' }
   }
 
   // 6. Redirect MUST be outside try/catch — redirect() throws NEXT_REDIRECT internally.
-  // If placed inside try/catch, the catch block swallows it and the redirect silently fails.
-  redirect(`/confirmation?status=${outcome}`)
+  redirect(`/confirmation?status=${status}`)
 }

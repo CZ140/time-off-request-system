@@ -1,12 +1,5 @@
 // app/reviewed/page.tsx
-
-function formatDate(iso: string): string {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
+import { formatDate } from '@/lib/email/utils'
 
 const LEAVE_TYPE_LABELS: Record<string, string> = {
   sick: 'Sick Leave',
@@ -26,6 +19,7 @@ export default async function ReviewedPage({ searchParams }: Props) {
   const params = await searchParams
 
   const status = params.status
+  const isFirst = params.first === 'true'
   const teacherName = params.teacher_name ?? '—'
   const startDate = params.start_date ? formatDate(params.start_date) : '—'
   const endDate = params.end_date ? formatDate(params.end_date) : '—'
@@ -40,13 +34,17 @@ export default async function ReviewedPage({ searchParams }: Props) {
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-lg w-full">
-        {/* Header */}
+        {/* Header — differs between first action and idempotent re-click */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Request Already Reviewed
+            {isFirst
+              ? isApproved ? 'Request Approved' : 'Request Denied'
+              : 'Request Already Reviewed'}
           </h1>
           <p className="text-sm text-gray-500">
-            This leave request has already been reviewed. No further action is needed.
+            {isFirst
+              ? 'Your decision has been recorded and the teacher has been notified.'
+              : 'This leave request has already been reviewed. No further action is needed.'}
           </p>
         </div>
 

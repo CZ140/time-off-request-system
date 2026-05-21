@@ -11,6 +11,7 @@ type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
 export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: BlackoutDateRow[] }) {
   const router = useRouter()
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [formKey, setFormKey] = useState(0)  // increment to force form re-mount on success
 
@@ -28,9 +29,15 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      await deleteBlackoutDate(id)
+      const result = await deleteBlackoutDate(id)
+      if (result.error) {
+        setDeleteError(result.error)
+        setConfirmId(null)
+        return
+      }
+      setDeleteError(null)
       setConfirmId(null)
-      router.refresh()  // re-fetch after delete
+      router.refresh()
     })
   }
 
@@ -77,6 +84,10 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
           <p className="w-full text-sm text-red-600 mt-1">{addState.error}</p>
         )}
       </form>
+
+      {deleteError && (
+        <p className="mb-4 text-sm text-red-600">{deleteError}</p>
+      )}
 
       {/* Blackout dates list */}
       {blackoutDates.length === 0 ? (

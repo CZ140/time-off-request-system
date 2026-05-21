@@ -81,7 +81,12 @@ export async function GET(request: NextRequest) {
     await sendEmail({
       to: updated.teacher_email,
       subject: 'Your time-off request has been approved',
-      html: approvalConfirmationTemplate(),
+      html: approvalConfirmationTemplate({
+        teacherName: updated.teacher_name,
+        leaveType: updated.leave_type as LeaveType,
+        startDate: updated.start_date,
+        endDate: updated.end_date,
+      }),
     })
   } else {
     await sendEmail({
@@ -96,6 +101,9 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // Step 7 — Redirect to /reviewed with display data
-  return NextResponse.redirect(buildReviewedUrl(request, updated))
+  // Step 7 — Redirect to /reviewed with display data. ?first=true signals this is the
+  // initial action so the page can show accurate copy rather than "Already Reviewed".
+  const firstActionUrl = buildReviewedUrl(request, updated)
+  firstActionUrl.searchParams.set('first', 'true')
+  return NextResponse.redirect(firstActionUrl)
 }

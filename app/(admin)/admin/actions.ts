@@ -46,8 +46,9 @@ export async function addBlackoutDate(
   return { success: true }
 }
 
-export async function deleteBlackoutDate(id: string): Promise<void> {
+export async function deleteBlackoutDate(id: string): Promise<{ error?: string }> {
   const supabase = createClient()
-  await supabase.from('blackout_dates').delete().eq('id', id)
-  // Errors are not surfaced — delete is best-effort; router.refresh() will reflect current DB state
+  const { error } = await supabase.from('blackout_dates').delete().eq('id', id)
+  if (error) return { error: 'Failed to delete blackout date. Please try again.' }
+  return {}
 }
