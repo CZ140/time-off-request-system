@@ -4,20 +4,29 @@
 // Throwing here causes a clear startup crash rather than a silent runtime failure.
 import 'server-only'
 
-const REQUIRED_VARS = [
+const isDemo = process.env.DEMO_MODE === 'true'
+
+// Resend vars are skipped in demo mode — emails are suppressed entirely,
+// so a verified sending domain and live API key are not required.
+const ALWAYS_REQUIRED = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'RESEND_API_KEY',
-  'RESEND_FROM',
-  'ADMIN_EMAILS',
   'APPROVAL_HMAC_SECRET',
   'ADMIN_PASSWORD',
   'SESSION_SECRET',
 ] as const
-// Note: APPROVAL_SECRET (legacy) is intentionally excluded — it is deprecated by APPROVAL_HMAC_SECRET
-// (SEC-02) and removing it from REQUIRED_VARS allows operators to remove the old var without a startup crash.
 
-for (const key of REQUIRED_VARS) {
+const PRODUCTION_ONLY = [
+  'RESEND_API_KEY',
+  'RESEND_FROM',
+  'ADMIN_EMAILS',
+] as const
+
+const varsToCheck = isDemo
+  ? ALWAYS_REQUIRED
+  : ([...ALWAYS_REQUIRED, ...PRODUCTION_ONLY] as const)
+
+for (const key of varsToCheck) {
   if (!process.env[key]) {
     throw new Error(`Missing required env var: ${key}`)
   }
