@@ -1,5 +1,6 @@
 'use server'
 
+import { timingSafeEqual } from 'node:crypto'
 import { redirect } from 'next/navigation'
 import { createSession } from '@/lib/auth/session'
 
@@ -11,7 +12,15 @@ export async function loginAdmin(
 ): Promise<LoginState> {
   const password = formData.get('password') as string
 
-  if (!password || password !== process.env.ADMIN_PASSWORD) {
+  // timingSafeEqual prevents timing attacks that could leak the password length
+  // or characters via response-time differences. Buffers must be the same length
+  // before comparison — mismatched lengths would throw, so we check first.
+  const provided = Buffer.from(password ?? '')
+  const expected = Buffer.from(process.env.ADMIN_PASSWORD ?? '')
+  const valid =
+    provided.length === expected.length && timingSafeEqual(provided, expected)
+
+  if (!valid) {
     return { error: 'Incorrect password. Please try again.' }
   }
 

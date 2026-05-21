@@ -24,6 +24,14 @@ function buildReviewedUrl(request: NextRequest, row: RequestRow): URL {
 }
 
 export async function GET(request: NextRequest) {
+  try {
+    return await handleApproval(request)
+  } catch {
+    return NextResponse.redirect(new URL('/invalid', request.url))
+  }
+}
+
+async function handleApproval(request: NextRequest) {
   // Step 1 — Parse query params
   const { searchParams } = request.nextUrl
   const action = searchParams.get('action')
@@ -60,6 +68,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Step 5 — Update DB
+  // .eq('status', 'pending') makes the update atomic: if two admins click simultaneously,
+  // both pass the in-memory idempotency check above, but only one UPDATE matches rows.
+  // The second gets 0 rows back (no data), skips email, and redirects to /reviewed.
   const newStatus = action === 'approve' ? 'approved' : 'denied'
   const { data: updated, error: updateError } = await supabase
     .from('requests')
@@ -69,6 +80,7 @@ export async function GET(request: NextRequest) {
       reviewed_by: admin ?? '',
     })
     .eq('id', id)
+    .eq('status', 'pending')
     .select()
     .single<RequestRow>()
 
