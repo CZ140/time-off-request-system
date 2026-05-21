@@ -106,13 +106,32 @@ export async function submitRequest(
     }
   }
 
-  // 3. Determine status
-  const status: RequestStatus = is_blackout ? 'auto_denied' : 'pending'
-
   // Duplicate guard: query for a matching row submitted within the last 60 seconds.
   // Covers both blackout and non-blackout submissions.
   // redirect() here is outside try/catch — NEXT_REDIRECT propagates correctly.
   const supabase = createClient()
+
+  // 3. Server-side blackout check — overrides the client-supplied is_blackout field (SEC-01).
+  // A teacher who selects "No" on the blackout question for dates in the blackout table
+  // is still auto-denied. The client value is never trusted for status determination.
+  const { data: blackoutRows, error: blackoutError } = await supabase
+    .from('blackout_dates')
+    .select('id')
+    .lte('start_date', end_date)   // blackout row starts on or before request end date
+    .gte('end_date', start_date)   // blackout row ends on or after request start date
+    .limit(1)                       // existence check only — one hit is enough
+
+  if (blackoutError) {
+    // Fail closed: if the blackout check fails, do not proceed.
+    // Returning an error is safer than silently using the client-supplied value.
+    return { message: 'Unable to verify blackout dates. Please try again.' }
+  }
+
+  const serverBlackout = (blackoutRows?.length ?? 0) > 0
+
+  // Status is derived from the server-computed blackout result, not the form field.
+  const status: RequestStatus = serverBlackout ? 'auto_denied' : 'pending'
+
   const windowStart = new Date(Date.now() - 60_000).toISOString()
   const { data: duplicate } = await supabase
     .from('requests')
@@ -139,7 +158,7 @@ export async function submitRequest(
         start_date,
         end_date,
         leave_type,
-        is_blackout,
+        is_blackout: serverBlackout,
         reason,
         status,
       })
@@ -148,7 +167,7 @@ export async function submitRequest(
     if (dbError || !inserted) return { message: 'Something went wrong. Please try again.' }
 
     // Send auto-denial email ONLY for blackout submissions, ONLY AFTER successful DB insert
-    if (is_blackout) {
+    if (serverBlackout) {
       await sendEmail({
         to: teacher_email,
         subject: 'Your time-off request — blackout period',
@@ -161,7 +180,7 @@ export async function submitRequest(
       })
     }
 
-    if (!is_blackout) {
+    if (!serverBlackout) {
       const resend = new Resend(process.env.RESEND_API_KEY)
       const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
       const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
