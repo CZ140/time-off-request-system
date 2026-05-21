@@ -7,6 +7,7 @@
 // getIronSession(). Forgetting this causes silent malfunction (session data
 // appears undefined, session.save() throws unexpectedly).
 import 'server-only'
+import '@/lib/config'
 
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'

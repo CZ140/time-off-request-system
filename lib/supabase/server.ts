@@ -4,6 +4,7 @@
 // If imported in a 'use client' file, the build will fail with:
 //   "You're importing a component that needs 'server-only'..."
 import 'server-only'
+import '@/lib/config'
 
 import { createClient as _createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
