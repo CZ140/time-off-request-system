@@ -7,6 +7,7 @@ import { sendEmail } from '@/lib/email/send'
 import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
+import { generateApprovalToken } from '@/lib/auth/tokens'
 
 // Validates email structure: requires local-part, @, domain, dot, TLD — no whitespace.
 // Simple regex intentionally: catches obvious invalids without over-constraining exotic valid addresses.
@@ -164,6 +165,8 @@ export async function submitRequest(
       const resend = new Resend(process.env.RESEND_API_KEY)
       const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
       const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
+      const approveToken = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'approve')
+      const denyToken    = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'deny')
       const batch = adminEmails.map(adminEmail => ({
         from: process.env.RESEND_FROM ?? 'Time Off System <noreply@example.com>',
         to: [adminEmail],
@@ -175,8 +178,8 @@ export async function submitRequest(
           startDate: start_date,
           endDate: end_date,
           reason,
-          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${encodeURIComponent(process.env.APPROVAL_SECRET ?? '')}&admin=${encodeURIComponent(adminEmail)}`,
-          denyUrl: `${base}/api/approve?action=deny&id=${inserted.id}&token=${encodeURIComponent(process.env.APPROVAL_SECRET ?? '')}&admin=${encodeURIComponent(adminEmail)}`,
+          approveUrl: `${base}/api/approve?action=approve&id=${inserted.id}&token=${approveToken}&admin=${encodeURIComponent(adminEmail)}`,
+          denyUrl:    `${base}/api/approve?action=deny&id=${inserted.id}&token=${denyToken}&admin=${encodeURIComponent(adminEmail)}`,
         }),
       }))
       await resend.batch.send(batch)

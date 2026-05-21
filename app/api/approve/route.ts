@@ -8,6 +8,7 @@ import { sendEmail } from '@/lib/email/send'
 import { approvalConfirmationTemplate } from '@/lib/email/templates/approval-confirmation'
 import { denialConfirmationTemplate } from '@/lib/email/templates/denial-confirmation'
 import type { Database, LeaveType } from '@/types/database'
+import { verifyApprovalToken } from '@/lib/auth/tokens'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 
@@ -31,10 +32,13 @@ export async function GET(request: NextRequest) {
   const admin = searchParams.get('admin')
 
   // Step 2 — Validate token and params
-  if (!token || !id || !action || token !== process.env.APPROVAL_SECRET) {
+  if (!token || !id || !action) {
     return NextResponse.redirect(new URL('/invalid', request.url))
   }
   if (action !== 'approve' && action !== 'deny') {
+    return NextResponse.redirect(new URL('/invalid', request.url))
+  }
+  if (!verifyApprovalToken(process.env.APPROVAL_HMAC_SECRET!, id, action, token)) {
     return NextResponse.redirect(new URL('/invalid', request.url))
   }
 
