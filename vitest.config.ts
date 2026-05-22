@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
@@ -8,7 +9,9 @@ export default defineConfig({
     alias: {
       // server-only throws on import outside Next.js server context.
       // Replace with an empty stub so Server Action logic can be unit-tested.
-      'server-only': new URL('./__mocks__/server-only.ts', import.meta.url).pathname,
+      // fileURLToPath is critical on Windows: URL.pathname yields '/C:/...'
+      // which Node's resolver rejects. fileURLToPath returns 'C:\\...'.
+      'server-only': fileURLToPath(new URL('./__mocks__/server-only.ts', import.meta.url)),
     },
     coverage: { provider: 'v8' },
   },
