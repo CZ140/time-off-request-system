@@ -40,6 +40,7 @@ for (const key of varsToCheck) {
 
 if ((process.env.SESSION_SECRET?.length ?? 0) < 32) {
   throw new Error(
-    'SESSION_SECRET must be at least 32 characters (generate with: openssl rand -base64 32)'
+    'SESSION_SECRET must be at least 32 characters ' +
+      '(generate with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'base64\'))")'
   )
 }

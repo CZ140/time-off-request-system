@@ -23,7 +23,7 @@ export interface AdminSessionData {
 
 const sessionOptions = {
   // SESSION_SECRET must be at least 32 characters (iron-session AES-256 requirement).
-  // Generate with: openssl rand -base64 32
+  // Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
   password: process.env.SESSION_SECRET!,
   cookieName: 'admin-session',
   cookieOptions: {

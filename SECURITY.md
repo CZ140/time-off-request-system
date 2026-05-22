@@ -8,7 +8,7 @@ Plain-language description of what this application protects, what it explicitly
 
 ### Forged approval clicks
 
-Approval and denial links sent to admins are signed with HMAC-SHA256 over `${request_id}:${action}:${approver_email}:${exp}`. Without the server's `APPROVAL_HMAC_SECRET`, an attacker cannot fabricate a valid link, even with full knowledge of the URL structure.
+Approval and denial links sent to admins are signed with HMAC-SHA256 over `${id}:${action}:${approverEmail}:${exp}`. Without the server's `APPROVAL_HMAC_SECRET`, an attacker cannot fabricate a valid link, even with full knowledge of the URL structure.
 
 A token for **approve** on request A cannot be reused as a **deny** on request A or as either action on request B. A token issued to admin Alice cannot be replayed by admin Bob, even if it leaks (e.g., via email forwarding or an archive breach). Tampering with any single character of the token, URL parameters, or hidden form fields causes verification to fail.
 
@@ -45,6 +45,8 @@ One dimension on admin actions:
 - **Per admin session** — 100 actions per hour, keyed by a random session ID generated at admin login (iron-session cookie). A fresh login gets a fresh budget. For email-click approvals (no session), the limit is keyed by the HMAC-verified `admin` email instead.
 
 Limits are enforced via a Supabase-backed rolling-window counter (`rate_limit_log` table). The check **fails open** on DB errors — a database outage does not lock out legitimate users.
+
+**Why fail-open here when the allowlist fails closed:** the two failures have asymmetric costs. A failed-open allowlist lets *anyone* submit forever — a total bypass of the gate. A failed-open rate limit lets an attacker submit at unbounded speed only for the duration of the DB outage; the moment the DB recovers, limiting resumes. Locking every legitimate teacher out during a database hiccup is the worse outcome.
 
 ### Search-engine discovery
 
@@ -99,6 +101,44 @@ The service-role key bypasses Row Level Security and has full read/write access 
 
 Many corporate email systems pre-fetch URLs in incoming messages (Outlook Safe Links, Gmail link rewriters, security scanners). The approval flow is a two-step GET-then-POST: the GET shows a confirmation page, only the explicit POST writes to the database. Auto-prefetchers see only the confirmation page and never perform the action. **Do not** revert to a one-step GET-writes flow.
 
+### Rotating secrets
+
+Procedures for the four secrets you may need to rotate. Each step assumes the new value has been generated (see the "Required environment variables" tables below for the standard commands).
+
+**`APPROVAL_HMAC_SECRET`** — rotate annually, or immediately on suspected compromise.
+1. Generate a new 32-byte hex value.
+2. Update the env var in Vercel (or your platform) and redeploy.
+3. **Impact:** every outstanding approval link in admin inboxes is invalidated — clicking one redirects to `/invalid`. Pending requests need fresh approval emails. Either ask the affected teachers to resubmit, or manually re-trigger the admin notification logic for each `status = 'pending'` row in the database.
+
+**`SESSION_SECRET`** — rotate annually, or immediately on suspected compromise.
+1. Generate a new ≥32-character base64 value.
+2. Update the env var and redeploy.
+3. **Impact:** every active admin session is invalidated. Admins are bounced to `/admin/login` on their next click and must re-enter `ADMIN_PASSWORD`. No data loss, no requests affected.
+
+**`SUPABASE_SERVICE_ROLE_KEY`** — rotate via the Supabase dashboard if suspected leak.
+1. In the dashboard: **Project Settings → API → "Reset service_role secret"**. This generates a new key and invalidates the old one immediately.
+2. Update the env var in Vercel and redeploy.
+3. **Impact:** between the dashboard click and the Vercel redeploy, the app cannot reach the database — all submissions and admin actions fail. Do this during low-traffic hours, and have the new value ready to paste before clicking reset. After the redeploy, the app is back online with the new key.
+
+**`ADMIN_PASSWORD`** — rotate when an admin leaves the school, or on suspected compromise.
+1. Pick a new value at least 16 random characters long.
+2. Update the env var and redeploy.
+3. **Impact:** the admin must use the new password on their next login. Existing sessions remain valid until they expire (browser cookie lifetime) — combine with a `SESSION_SECRET` rotation if you want to immediately log out all sessions as well.
+
+For all four: **do not** keep old values in `.env.example` or any committed file. The repo's `.env.example` should contain placeholders only.
+
+---
+
+## Out of scope
+
+This version explicitly does NOT try to do the following. Listed here to protect against scope creep in future conversations — if a request lands in one of these areas, treat it as a new project, not a feature extension.
+
+- **Multi-school / multi-tenant.** One deployment serves one school. There is no concept of an organisation, a tenant ID, or per-school data isolation. Running multiple schools off one deployment would require schema changes, RLS policies, an auth provider that issues per-tenant tokens, and a different UI.
+- **SSO (SAML / OAuth / Google Workspace).** No federated identity. There is no upfront teacher login at all in the current build (see "Sender authenticity" above for the rationale).
+- **PTO balance tracking.** No concept of available days remaining, accrual, year-end rollover, or per-leave-type quotas. The system records that a teacher *wants* time off; it doesn't track that they *have* it.
+- **Audit logs.** Beyond the per-row `reviewed_by` and `reviewed_at` fields on the `requests` table, there is no event log. Edits, deletions, login attempts, and admin actions are not journaled.
+- **GDPR / privacy subject requests.** No "export my data" or "delete my data" flow. If a teacher leaves the school and asks for their data to be removed, the operator must do it manually via the Supabase dashboard.
+
 ---
 
 ## Required environment variables in production
@@ -110,7 +150,7 @@ Every variable below must be set in the Vercel project (or equivalent) before go
 | Variable | Notes |
 |---|---|
 | `APPROVAL_HMAC_SECRET` | Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Rotate annually or on suspected compromise. |
-| `SESSION_SECRET` | Minimum 32 characters. Generate with `openssl rand -base64 32`. Rotation invalidates all active admin sessions. |
+| `SESSION_SECRET` | Minimum 32 characters. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. Rotation invalidates all active admin sessions. |
 | `ADMIN_PASSWORD` | The production admin password. **MUST NOT** equal `DEMO_ADMIN_PASSWORD`. Never share. |
 | `SUPABASE_SERVICE_ROLE_KEY` | From Supabase Dashboard → API. Server-only — never expose to the browser. |
 
@@ -129,13 +169,13 @@ Every variable below must be set in the Vercel project (or equivalent) before go
 |---|---|
 | `SUPABASE_URL` | Project URL. |
 | `ADMIN_EMAILS` | Comma-separated list of admin addresses that receive notifications. |
-| `RESEND_API_KEY` | Required when `DEMO_MODE` is not `true`. |
-| `RESEND_FROM` | Verified Resend sending domain. Unverified domains will be flagged as spam. |
+| `RESEND_API_KEY` | Required when `DEMO_MODE=false` (or unset). Not used when `DEMO_MODE=true`. |
+| `RESEND_FROM` | Required when `DEMO_MODE=false` (or unset). Not used when `DEMO_MODE=true`. Must be a verified Resend sending domain; unverified domains will be flagged as spam. |
 | `NEXT_PUBLIC_BASE_URL` | Production URL used in email link generation. |
 
 ### Demo-only
 
-`DEMO_ADMIN_PASSWORD` is required when `DEMO_MODE=true` and forbidden (well, ignored) otherwise. It is openly displayed on the demo login page as a hint, so MUST NOT match `ADMIN_PASSWORD`.
+`DEMO_ADMIN_PASSWORD` is required when `DEMO_MODE=true`. Not used and unchecked when `DEMO_MODE=false` (or unset). It is openly displayed on the demo login page as a hint, so MUST NOT match `ADMIN_PASSWORD`.
 
 ---
 
