@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { createAuthClient } from '@/lib/supabase/auth-server'
 import { sendEmail, sendBatch } from '@/lib/email/send'
 import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
@@ -41,29 +40,12 @@ export async function submitRequest(
 ): Promise<FormState> {
   // 1. Extract fields
   const teacher_name = formData.get('teacher_name') as string
-  // In real mode, the email comes from the Supabase session — NEVER from form input.
-  // A malicious actor could otherwise submit a request as someone else by tampering
-  // with the (read-only) input client-side. In demo mode there is no session, so we
-  // accept the form-supplied email.
-  const isDemo = process.env.DEMO_MODE === 'true'
-  let teacher_email: string
-  if (isDemo) {
-    teacher_email = formData.get('teacher_email') as string
-  } else {
-    const authClient = await createAuthClient()
-    const { data: { user } } = await authClient.auth.getUser()
-    if (!user?.email) {
-      return { message: 'Your session has expired. Please log in again.' }
-    }
-    teacher_email = user.email
-  }
+  const teacher_email = formData.get('teacher_email') as string
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
   const leave_type = formData.get('leave_type') as LeaveType
-  // Note: the client-supplied is_blackout is intentionally NOT read here.
-  // The blackout determination is made server-side from the blackout_dates table
-  // (see serverBlackout below). The form field is only used to require the user
-  // to acknowledge the blackout question — the answer itself is ignored.
+  // All FormData values are strings — never coerce with Boolean()
+  const is_blackout = formData.get('is_blackout') === 'true'
   const reason = (formData.get('reason') as string) || null
 
   // 2. Server-side validation — collect all errors before returning

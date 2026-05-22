@@ -18,12 +18,9 @@ export default function RootLayout({
       <body className="antialiased">
         {isDemo && (
           <div className="bg-amber-400 text-amber-900 text-center text-sm font-medium py-2 px-4">
-            <div>Demo mode — no login required, data resets daily.</div>
-            <div>
-              Form submissions are saved but no emails are sent. Admin login:{' '}
-              <span className="font-mono font-bold">demo</span> password at{' '}
-              <a href="/admin" className="underline hover:no-underline">/admin</a>
-            </div>
+            Demo mode — form submissions are saved but no emails are sent.
+            Admin login: <span className="font-mono font-bold">demo</span> password at{' '}
+            <a href="/admin" className="underline hover:no-underline">/admin</a>
           </div>
         )}
         {children}

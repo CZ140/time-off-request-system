@@ -1,13 +1,13 @@
 // tests/validation.test.ts
 // Unit tests for submitRequest validation logic.
 // Calls the server action directly — 'use server' is a compiler directive Vitest ignores.
-// Supabase, auth, and next/navigation are mocked to isolate validation from I/O.
+// Supabase and next/navigation are mocked to isolate validation from I/O.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock next/navigation so redirect() doesn't throw NEXT_REDIRECT in tests
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }))
 
-// Mock Supabase service-role client (DB inserts, blackout checks)
+// Mock Supabase to return no duplicate and successful insert by default
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
@@ -23,14 +23,7 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-// Mock Supabase Auth client — controllable per-test via getUserMock
-const getUserMock = vi.fn()
-vi.mock('@/lib/supabase/auth-server', () => ({
-  createAuthClient: vi.fn(async () => ({
-    auth: { getUser: getUserMock },
-  })),
-}))
-
+// Mock email modules — we're testing validation only, not email delivery
 vi.mock('@/lib/email/send', () => ({
   sendEmail: vi.fn().mockResolvedValue({}),
   sendBatch: vi.fn().mockResolvedValue({}),
@@ -70,13 +63,9 @@ function makeFormData(overrides: Record<string, string | null> = {}) {
   return fd
 }
 
-// Tests below run in DEMO_MODE so the email comes from the form (anonymous flow).
-// Validation logic — name, date ordering, leave-type required, etc. — is shared between
-// demo and real modes, so we only need to cover it in one branch.
-describe('submitRequest validation (demo mode — form-supplied email)', () => {
+describe('submitRequest validation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.DEMO_MODE = 'true'
     process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
     process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
     process.env.ADMIN_EMAILS = 'admin@school.edu'
@@ -101,6 +90,7 @@ describe('submitRequest validation (demo mode — form-supplied email)', () => {
   it('accepts a valid email address and passes validation (redirect called)', async () => {
     const { redirect } = await import('next/navigation')
     const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'valid@domain.com' }))
+    // Valid form passes validation and hits redirect — action returns undefined
     expect(result).toBeUndefined()
     expect(redirect).toHaveBeenCalled()
   })
@@ -143,60 +133,5 @@ describe('submitRequest validation (demo mode — form-supplied email)', () => {
     }))
     expect(result.errors?.teacher_name).toBeDefined()
     expect(result.errors?.teacher_email).toBeDefined()
-  })
-
-  it('does not call createAuthClient in demo mode', async () => {
-    const { createAuthClient } = await import('@/lib/supabase/auth-server')
-    await submitRequest(INITIAL_STATE, makeFormData())
-    expect(createAuthClient).not.toHaveBeenCalled()
-  })
-})
-
-describe('submitRequest (real mode — session-derived email)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    delete process.env.DEMO_MODE
-    process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
-    process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
-    process.env.ADMIN_EMAILS = 'admin@school.edu'
-    process.env.RESEND_FROM = 'noreply@school.edu'
-  })
-
-  it('returns "session expired" when there is no authenticated user', async () => {
-    getUserMock.mockResolvedValueOnce({ data: { user: null } })
-    const result = await submitRequest(INITIAL_STATE, makeFormData())
-    expect(result.message).toBe('Your session has expired. Please log in again.')
-  })
-
-  it('uses the session email and ignores any form-supplied teacher_email', async () => {
-    getUserMock.mockResolvedValue({
-      data: { user: { id: 'u1', email: 'realuser@school.edu' } },
-    })
-    const { createClient } = await import('@/lib/supabase/server')
-    const { redirect } = await import('next/navigation')
-    // Inject a malicious form value — server must ignore it.
-    const result = await submitRequest(
-      INITIAL_STATE,
-      makeFormData({ teacher_email: 'attacker@evil.com' })
-    )
-    expect(result).toBeUndefined()
-    expect(redirect).toHaveBeenCalled()
-    // The insert call should carry the session email, not the form value.
-    const fromCalls = vi.mocked(createClient).mock.results[0]?.value.from.mock.calls
-    expect(fromCalls).toBeDefined()
-    // Find the insert call and verify the email field
-    const insertCall = vi
-      .mocked(createClient)
-      .mock.results[0]!.value.from.mock.results
-      .find((r: { value: { insert: ReturnType<typeof vi.fn> } }) => r.value.insert.mock.calls.length > 0)
-    expect(insertCall?.value.insert.mock.calls[0][0].teacher_email).toBe('realuser@school.edu')
-  })
-
-  it('still runs name/date validation (session email cannot bypass other required fields)', async () => {
-    getUserMock.mockResolvedValue({
-      data: { user: { id: 'u1', email: 'realuser@school.edu' } },
-    })
-    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_name: '' }))
-    expect(result.errors?.teacher_name?.[0]).toBe('Full name is required.')
   })
 })
