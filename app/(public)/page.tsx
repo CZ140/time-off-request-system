@@ -5,14 +5,40 @@ import { submitRequest, type FormState } from './actions'
 
 const initialState: FormState = {}
 
+// Parsed once at module load — the env var is inlined at build time.
+// UX hint only: the server-side ALLOWED_EMAIL_DOMAINS check in actions.ts is
+// the authoritative gate. If this hint is missing or wrong, submissions still
+// pass/fail correctly server-side.
+const ALLOWED_DOMAINS_HINT = (process.env.NEXT_PUBLIC_ALLOWED_EMAIL_DOMAINS_HINT ?? '')
+  .split(',')
+  .map((d) => d.trim().toLowerCase())
+  .filter(Boolean)
+
+function isDomainHintViolation(email: string): boolean {
+  // Empty hint config → no client-side hint (server still enforces its own list).
+  if (ALLOWED_DOMAINS_HINT.length === 0) return false
+  const at = email.lastIndexOf('@')
+  // Don't show the hint for inputs that aren't yet a complete-looking email —
+  // a half-typed local-part would surface a "wrong domain" message prematurely.
+  if (at <= 0 || at === email.length - 1) return false
+  const domain = email.slice(at + 1).trim().toLowerCase()
+  return !ALLOWED_DOMAINS_HINT.includes(domain)
+}
+
 export default function TeacherFormPage() {
   const [state, formAction, pending] = useActionState(submitRequest, initialState)
   const [isBlackout, setIsBlackout] = useState<string | null>(null)
   const [startDate, setStartDate] = useState<string>('')
+  const [emailHint, setEmailHint] = useState<string | null>(null)
 
   // Compute today's date string for the date input min attribute (client-side UX affordance)
   const today = new Date()
   const todayStr = today.toISOString().split('T')[0]
+
+  // Build the human-readable hint message once.
+  const hintDomainList = ALLOWED_DOMAINS_HINT.length === 1
+    ? `@${ALLOWED_DOMAINS_HINT[0]}`
+    : ALLOWED_DOMAINS_HINT.map((d) => `@${d}`).join(' or ')
 
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -51,12 +77,38 @@ export default function TeacherFormPage() {
               type="email"
               name="teacher_email"
               defaultValue={state.values?.teacher_email ?? ''}
-              aria-describedby={state.errors?.teacher_email ? 'teacher_email-error' : undefined}
+              aria-describedby={
+                state.errors?.teacher_email
+                  ? 'teacher_email-error'
+                  : emailHint
+                    ? 'teacher_email-hint'
+                    : undefined
+              }
+              onBlur={(e) => {
+                // Client-side hint only — server-side allowlist is authoritative.
+                // The form is NOT prevented from submitting; the user can still
+                // hit submit and get the real server response.
+                setEmailHint(
+                  isDomainHintViolation(e.target.value)
+                    ? `This system is only for ${hintDomainList} emails.`
+                    : null
+                )
+              }}
+              onChange={() => {
+                // Clear the stale hint as soon as the user edits, so it doesn't
+                // linger after the typo is fixed.
+                if (emailHint) setEmailHint(null)
+              }}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {state.errors?.teacher_email?.[0] && (
               <p id="teacher_email-error" className="mt-1 text-sm text-red-600">
                 {state.errors.teacher_email[0]}
+              </p>
+            )}
+            {!state.errors?.teacher_email && emailHint && (
+              <p id="teacher_email-hint" className="mt-1 text-sm text-amber-700">
+                {emailHint}
               </p>
             )}
           </div>

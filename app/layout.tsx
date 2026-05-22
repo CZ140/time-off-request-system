@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const isDemoBuild = process.env.DEMO_MODE === 'true'
+
 export const metadata: Metadata = {
   title: "Time Off Request System",
   description: "Teacher leave request submission and admin approval system",
+  // Production instances must not be indexed by search engines — the form
+  // includes teacher PII and approval link URLs that should not be public.
+  // The demo deployment IS indexable (it's a portfolio piece meant to be found).
+  robots: isDemoBuild ? undefined : { index: false, follow: false },
 };
 
 export default function RootLayout({
