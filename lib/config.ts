@@ -12,18 +12,24 @@ const ALWAYS_REQUIRED = [
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
   'APPROVAL_HMAC_SECRET',
-  'ADMIN_PASSWORD',
   'SESSION_SECRET',
+] as const
+
+const DEMO_ONLY = [
+  // Demo admin password is held in a separate var so the demo deployment
+  // can never accidentally expose the production ADMIN_PASSWORD.
+  'DEMO_ADMIN_PASSWORD',
 ] as const
 
 const PRODUCTION_ONLY = [
   'RESEND_API_KEY',
   'RESEND_FROM',
   'ADMIN_EMAILS',
+  'ADMIN_PASSWORD',
 ] as const
 
 const varsToCheck = isDemo
-  ? ALWAYS_REQUIRED
+  ? ([...ALWAYS_REQUIRED, ...DEMO_ONLY] as const)
   : ([...ALWAYS_REQUIRED, ...PRODUCTION_ONLY] as const)
 
 for (const key of varsToCheck) {

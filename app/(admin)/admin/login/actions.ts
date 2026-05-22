@@ -12,11 +12,19 @@ export async function loginAdmin(
 ): Promise<LoginState> {
   const password = formData.get('password') as string
 
+  // In demo mode, the expected password is DEMO_ADMIN_PASSWORD — kept distinct
+  // from the production ADMIN_PASSWORD so the demo deployment can never reveal
+  // production credentials (the login page openly displays the demo password
+  // as a hint to portfolio reviewers).
+  const expectedPassword = process.env.DEMO_MODE === 'true'
+    ? (process.env.DEMO_ADMIN_PASSWORD ?? '')
+    : (process.env.ADMIN_PASSWORD ?? '')
+
   // timingSafeEqual prevents timing attacks that could leak the password length
   // or characters via response-time differences. Buffers must be the same length
   // before comparison — mismatched lengths would throw, so we check first.
   const provided = Buffer.from(password ?? '')
-  const expected = Buffer.from(process.env.ADMIN_PASSWORD ?? '')
+  const expected = Buffer.from(expectedPassword)
   const valid =
     provided.length === expected.length && timingSafeEqual(provided, expected)
 
