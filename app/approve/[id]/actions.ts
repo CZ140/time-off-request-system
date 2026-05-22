@@ -6,23 +6,46 @@ import { sendEmail } from '@/lib/email/send'
 import { verifyApprovalToken } from '@/lib/auth/tokens'
 import { approvalConfirmationTemplate } from '@/lib/email/templates/approval-confirmation'
 import { denialConfirmationTemplate } from '@/lib/email/templates/denial-confirmation'
+import { checkAndLogRateLimit } from '@/lib/rate-limit'
 import type { Database, LeaveType } from '@/types/database'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 
 export async function confirmApproval(formData: FormData) {
-  const id     = formData.get('id') as string
-  const action = formData.get('action') as string
-  const token  = formData.get('token') as string
-  const admin  = formData.get('admin') as string
+  const id      = formData.get('id') as string
+  const action  = formData.get('action') as string
+  const token   = formData.get('token') as string
+  const admin   = formData.get('admin') as string
+  const expRaw  = formData.get('exp') as string
 
   // Re-validate on the server — never trust form fields alone.
   // The hidden fields could be tampered by a malicious actor.
-  if (!id || !token || (action !== 'approve' && action !== 'deny')) {
+  if (!id || !token || !admin || !expRaw || (action !== 'approve' && action !== 'deny')) {
     redirect('/invalid')
   }
 
-  if (!verifyApprovalToken(process.env.APPROVAL_HMAC_SECRET!, id, action, token)) {
+  const exp = Number(expRaw)
+  const result = verifyApprovalToken(
+    process.env.APPROVAL_HMAC_SECRET!,
+    id,
+    action,
+    admin,
+    exp,
+    token
+  )
+
+  if (!result.valid) {
+    if (result.reason === 'expired') redirect('/expired')
+    redirect('/invalid')
+  }
+
+  // Rate-limit by verified admin email. The email-click approval flow has no
+  // iron-session, so we substitute the HMAC-verified `admin` field as the
+  // identity dimension. 100/hr is plenty for an admin clearing a queue.
+  // We pass this check AFTER token verification so we never log a row for
+  // tampered/forged inputs.
+  const adminLimit = await checkAndLogRateLimit(`approve:admin:${admin.toLowerCase()}`, 100, 3600)
+  if (!adminLimit.allowed) {
     redirect('/invalid')
   }
 

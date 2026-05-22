@@ -36,6 +36,19 @@ vi.mock('@/lib/email/templates/admin-notification', () => ({
 
 vi.mock('@/lib/auth/tokens', () => ({
   generateApprovalToken: vi.fn(() => 'fake-hex-token'),
+  defaultApprovalExpiry: vi.fn(() => 1700000000),
+}))
+
+// Rate limiter is exercised end-to-end in tests/rate-limit.test.ts.
+// Mock here so submitRequest validation tests don't hit the real DB or change
+// behaviour across runs.
+vi.mock('@/lib/rate-limit', () => ({
+  checkAndLogRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+  getCallerIp: vi.fn(() => '127.0.0.1'),
+}))
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn(async () => new Headers()),
 }))
 
 import { submitRequest } from '@/app/(public)/actions'
@@ -183,5 +196,22 @@ describe('submitRequest validation (real mode — allowlist enforced)', () => {
   it('still runs name/date validation when allowlist passes', async () => {
     const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu', teacher_name: '' }))
     expect(result.errors?.teacher_name?.[0]).toBe('Full name is required.')
+  })
+
+  it('returns a per-email rate-limit message when the email bucket is full', async () => {
+    const { checkAndLogRateLimit } = await import('@/lib/rate-limit')
+    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 3600 })
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu' }))
+    expect(result.message).toMatch(/Too many requests from this email/)
+  })
+
+  it('returns a per-IP rate-limit message when the IP bucket is full', async () => {
+    const { checkAndLogRateLimit } = await import('@/lib/rate-limit')
+    // First call (per-email) allowed, second call (per-IP) denied
+    vi.mocked(checkAndLogRateLimit)
+      .mockResolvedValueOnce({ allowed: true })
+      .mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 3600 })
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu' }))
+    expect(result.message).toMatch(/Too many requests from your network/)
   })
 })

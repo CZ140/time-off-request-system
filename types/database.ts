@@ -86,6 +86,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_log: {
+        Row: {
+          id: number
+          key: string
+          occurred_at: string
+        }
+        Insert: {
+          id?: number
+          key: string
+          occurred_at?: string
+        }
+        Update: {
+          id?: number
+          key?: string
+          occurred_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

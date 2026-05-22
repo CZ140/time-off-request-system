@@ -9,19 +9,33 @@ type RequestRow = Database['public']['Tables']['requests']['Row']
 
 type Props = {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ action?: string; token?: string; admin?: string }>
+  searchParams: Promise<{ action?: string; token?: string; admin?: string; exp?: string }>
 }
 
 export default async function ApprovalConfirmationPage({ params, searchParams }: Props) {
   const { id } = await params
-  const { action, token, admin } = await searchParams
+  const { action, token, admin, exp } = await searchParams
 
   // Validate params and HMAC token server-side before fetching any data.
-  if (!action || !token || (action !== 'approve' && action !== 'deny')) {
+  if (!action || !token || !admin || !exp || (action !== 'approve' && action !== 'deny')) {
     redirect('/invalid')
   }
 
-  if (!verifyApprovalToken(process.env.APPROVAL_HMAC_SECRET!, id, action, token)) {
+  const expNum = Number(exp)
+  const result = verifyApprovalToken(
+    process.env.APPROVAL_HMAC_SECRET!,
+    id,
+    action,
+    admin,
+    expNum,
+    token
+  )
+
+  if (!result.valid) {
+    // Expired tokens get a specific page so the admin understands why and can
+    // request a fresh link, rather than the generic "invalid link" treatment
+    // used for tampering and malformed input.
+    if (result.reason === 'expired') redirect('/expired')
     redirect('/invalid')
   }
 
@@ -94,12 +108,14 @@ export default async function ApprovalConfirmationPage({ params, searchParams }:
           )}
         </div>
 
-        {/* Confirmation form — hidden fields carry the verified token through to the Server Action */}
+        {/* Confirmation form — hidden fields carry the verified token through to the Server Action.
+            The action re-verifies the HMAC against admin + exp so a tampered hidden field still fails. */}
         <form action={confirmApproval}>
           <input type="hidden" name="id"     value={id} />
           <input type="hidden" name="action" value={action} />
           <input type="hidden" name="token"  value={token} />
-          <input type="hidden" name="admin"  value={admin ?? ''} />
+          <input type="hidden" name="admin"  value={admin} />
+          <input type="hidden" name="exp"    value={exp} />
 
           <button
             type="submit"

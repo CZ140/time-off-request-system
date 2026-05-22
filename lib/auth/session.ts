@@ -9,11 +9,16 @@
 import 'server-only'
 import '@/lib/config'
 
+import { randomUUID } from 'node:crypto'
 import { getIronSession } from 'iron-session'
 import { cookies } from 'next/headers'
 
 export interface AdminSessionData {
   isLoggedIn: boolean
+  // Stable random ID per login. Used as a rate-limit key so admin actions are
+  // bucketed per-session rather than per-IP (which would conflate multiple
+  // admins behind the same NAT). Set once at createSession; cleared on destroy.
+  sessionId?: string
 }
 
 const sessionOptions = {
@@ -36,6 +41,7 @@ export async function getSession() {
 export async function createSession() {
   const session = await getSession()
   session.isLoggedIn = true
+  session.sessionId = randomUUID()
   await session.save()
 }
 

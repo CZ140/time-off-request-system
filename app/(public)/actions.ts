@@ -1,13 +1,15 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail, sendBatch } from '@/lib/email/send'
 import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
-import { generateApprovalToken } from '@/lib/auth/tokens'
+import { generateApprovalToken, defaultApprovalExpiry } from '@/lib/auth/tokens'
 import { isAllowedEmail } from '@/lib/auth/allowed-email'
+import { checkAndLogRateLimit, getCallerIp } from '@/lib/rate-limit'
 
 // Validates email structure: requires local-part, @, domain, dot, TLD — no whitespace.
 // Simple regex intentionally: catches obvious invalids without over-constraining exotic valid addresses.
@@ -45,8 +47,10 @@ export async function submitRequest(
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
   const leave_type = formData.get('leave_type') as LeaveType
-  // All FormData values are strings — never coerce with Boolean()
-  const is_blackout = formData.get('is_blackout') === 'true'
+  // Note: the client-supplied is_blackout is intentionally NOT read here.
+  // The blackout determination is made server-side from the blackout_dates table
+  // (see serverBlackout below). The form field is only used to require the user
+  // to acknowledge the blackout question — the answer itself is ignored.
   const reason = (formData.get('reason') as string) || null
 
   // 2. Server-side validation — collect all errors before returning
@@ -117,6 +121,25 @@ export async function submitRequest(
   // Covers both blackout and non-blackout submissions.
   // redirect() here is outside try/catch — NEXT_REDIRECT propagates correctly.
   const supabase = createClient()
+
+  // Rate limit — runs after validation passes (so we don't count malformed
+  // attempts against the user) and before any other DB work or email send.
+  // Two dimensions:
+  //   - per claimed email (10/hr): prevents a single victim's inbox from being
+  //     spammed with auto-denial / confirmation emails
+  //   - per source IP (100/hr): catches the "attacker rotates emails to bypass
+  //     the per-email limit" case
+  // Demo mode is NOT exempted: 10/hr is plenty for portfolio reviewers.
+  const requestHeaders = await headers()
+  const callerIp = getCallerIp(requestHeaders)
+  const emailLimit = await checkAndLogRateLimit(`submit:email:${teacher_email.toLowerCase()}`, 10, 3600)
+  if (!emailLimit.allowed) {
+    return { message: 'Too many requests from this email address. Please try again in an hour.' }
+  }
+  const ipLimit = await checkAndLogRateLimit(`submit:ip:${callerIp}`, 100, 3600)
+  if (!ipLimit.allowed) {
+    return { message: 'Too many requests from your network. Please try again in an hour.' }
+  }
 
   // 3. Server-side blackout check — overrides the client-supplied is_blackout field (SEC-01).
   // A teacher who selects "No" on the blackout question for dates in the blackout table
@@ -196,22 +219,30 @@ export async function submitRequest(
     try {
       const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
       const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
-      const approveToken = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'approve')
-      const denyToken    = generateApprovalToken(process.env.APPROVAL_HMAC_SECRET!, inserted.id, 'deny')
-      await sendBatch(adminEmails.map(adminEmail => ({
-        to: adminEmail,
-        subject: `New leave request: ${teacher_name}`,
-        html: adminNotificationTemplate({
-          teacherName: teacher_name,
-          teacherEmail: teacher_email,
-          leaveType: leave_type,
-          startDate: start_date,
-          endDate: end_date,
-          reason,
-          approveUrl: `${base}/approve/${inserted.id}?action=approve&token=${approveToken}&admin=${encodeURIComponent(adminEmail)}`,
-          denyUrl:    `${base}/approve/${inserted.id}?action=deny&token=${denyToken}&admin=${encodeURIComponent(adminEmail)}`,
-        }),
-      })))
+      // Per-admin tokens: each admin gets a token bound to their own email so
+      // a leaked link can't be used by a different admin. Expiry is shared
+      // across all recipients (single issue-time timestamp).
+      const exp = defaultApprovalExpiry()
+      const secret = process.env.APPROVAL_HMAC_SECRET!
+      await sendBatch(adminEmails.map(adminEmail => {
+        const approveToken = generateApprovalToken(secret, inserted.id, 'approve', adminEmail, exp)
+        const denyToken    = generateApprovalToken(secret, inserted.id, 'deny', adminEmail, exp)
+        const adminParam   = encodeURIComponent(adminEmail)
+        return {
+          to: adminEmail,
+          subject: `New leave request: ${teacher_name}`,
+          html: adminNotificationTemplate({
+            teacherName: teacher_name,
+            teacherEmail: teacher_email,
+            leaveType: leave_type,
+            startDate: start_date,
+            endDate: end_date,
+            reason,
+            approveUrl: `${base}/approve/${inserted.id}?action=approve&token=${approveToken}&admin=${adminParam}&exp=${exp}`,
+            denyUrl:    `${base}/approve/${inserted.id}?action=deny&token=${denyToken}&admin=${adminParam}&exp=${exp}`,
+          }),
+        }
+      }))
     } catch (emailErr) {
       // DB row exists but admins were not notified — return a distinct message (REL-01).
       console.error(`[REL-01] Admin notification failed for request ${inserted.id}:`, emailErr)
