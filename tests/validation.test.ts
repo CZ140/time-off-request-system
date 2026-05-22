@@ -4,10 +4,8 @@
 // Supabase and next/navigation are mocked to isolate validation from I/O.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock next/navigation so redirect() doesn't throw NEXT_REDIRECT in tests
 vi.mock('next/navigation', () => ({ redirect: vi.fn() }))
 
-// Mock Supabase to return no duplicate and successful insert by default
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
@@ -23,7 +21,6 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-// Mock email modules — we're testing validation only, not email delivery
 vi.mock('@/lib/email/send', () => ({
   sendEmail: vi.fn().mockResolvedValue({}),
   sendBatch: vi.fn().mockResolvedValue({}),
@@ -63,13 +60,18 @@ function makeFormData(overrides: Record<string, string | null> = {}) {
   return fd
 }
 
-describe('submitRequest validation', () => {
+// Validation logic — name, date ordering, leave-type required, etc. — is shared
+// between demo and real modes, so we cover it once under demo mode where the
+// allowlist is skipped (so any test email works).
+describe('submitRequest validation (demo mode — allowlist skipped)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.DEMO_MODE = 'true'
     process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
     process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
     process.env.ADMIN_EMAILS = 'admin@school.edu'
     process.env.RESEND_FROM = 'noreply@school.edu'
+    delete process.env.ALLOWED_EMAIL_DOMAINS
   })
 
   it('returns teacher_name error when name is missing', async () => {
@@ -90,7 +92,6 @@ describe('submitRequest validation', () => {
   it('accepts a valid email address and passes validation (redirect called)', async () => {
     const { redirect } = await import('next/navigation')
     const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'valid@domain.com' }))
-    // Valid form passes validation and hits redirect — action returns undefined
     expect(result).toBeUndefined()
     expect(redirect).toHaveBeenCalled()
   })
@@ -133,5 +134,54 @@ describe('submitRequest validation', () => {
     }))
     expect(result.errors?.teacher_name).toBeDefined()
     expect(result.errors?.teacher_email).toBeDefined()
+  })
+
+  it('demo mode: accepts an email outside the allowlist (allowlist skipped)', async () => {
+    // Even if the allowlist is set, demo mode must not enforce it.
+    process.env.ALLOWED_EMAIL_DOMAINS = 'school.edu'
+    const { redirect } = await import('next/navigation')
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'visitor@gmail.com' }))
+    expect(result).toBeUndefined()
+    expect(redirect).toHaveBeenCalled()
+  })
+})
+
+describe('submitRequest validation (real mode — allowlist enforced)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env.DEMO_MODE
+    process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
+    process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
+    process.env.ADMIN_EMAILS = 'admin@school.edu'
+    process.env.RESEND_FROM = 'noreply@school.edu'
+    process.env.ALLOWED_EMAIL_DOMAINS = 'school.edu'
+  })
+
+  it('accepts an email on the allowlist', async () => {
+    const { redirect } = await import('next/navigation')
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu' }))
+    expect(result).toBeUndefined()
+    expect(redirect).toHaveBeenCalled()
+  })
+
+  it('rejects an email on a disallowed domain', async () => {
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'attacker@evil.com' }))
+    expect(result.errors?.teacher_email?.[0]).toBe("This email isn't authorized to submit requests.")
+  })
+
+  it('rejects when ALLOWED_EMAIL_DOMAINS is unset (fail-closed)', async () => {
+    delete process.env.ALLOWED_EMAIL_DOMAINS
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu' }))
+    expect(result.errors?.teacher_email?.[0]).toBe("This email isn't authorized to submit requests.")
+  })
+
+  it('format error takes precedence over allowlist error (clearer feedback)', async () => {
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'not-an-email' }))
+    expect(result.errors?.teacher_email?.[0]).toBe('Please enter a valid email address.')
+  })
+
+  it('still runs name/date validation when allowlist passes', async () => {
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ teacher_email: 'teacher@school.edu', teacher_name: '' }))
+    expect(result.errors?.teacher_name?.[0]).toBe('Full name is required.')
   })
 })

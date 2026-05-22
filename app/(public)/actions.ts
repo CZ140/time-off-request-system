@@ -7,6 +7,7 @@ import { autoDenialTemplate } from '@/lib/email/templates/auto-denial'
 import { adminNotificationTemplate } from '@/lib/email/templates/admin-notification'
 import type { LeaveType, RequestStatus } from '@/types/database'
 import { generateApprovalToken } from '@/lib/auth/tokens'
+import { isAllowedEmail } from '@/lib/auth/allowed-email'
 
 // Validates email structure: requires local-part, @, domain, dot, TLD — no whitespace.
 // Simple regex intentionally: catches obvious invalids without over-constraining exotic valid addresses.
@@ -55,10 +56,17 @@ export async function submitRequest(
     errors.teacher_name = ['Full name is required.']
   }
 
+  // Form-supplied email (no session — the form is open per the trust model of a
+  // small, known cohort). The allowlist below is the only server-side gate on
+  // who can submit. Demo mode skips the allowlist so portfolio reviewers can use it.
+  const isDemo = process.env.DEMO_MODE === 'true'
+
   if (!teacher_email?.trim()) {
     errors.teacher_email = ['Work email is required.']
   } else if (!EMAIL_REGEX.test(teacher_email)) {
     errors.teacher_email = ['Please enter a valid email address.']
+  } else if (!isDemo && !isAllowedEmail(teacher_email)) {
+    errors.teacher_email = ["This email isn't authorized to submit requests."]
   }
 
   if (!start_date) {
