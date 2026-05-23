@@ -53,7 +53,7 @@ vi.mock('@/lib/supabase/server', () => ({
 // resolves correctly.
 
 interface ChainableResult<T = unknown> {
-  data?: T
+  data?: T | null
   error?: { code?: string; message?: string } | null
   count?: number | null
 }
@@ -154,7 +154,7 @@ describe('reviewRequest', () => {
 
   it('returns a rate-limit error when the per-session budget is exceeded', async () => {
     const { checkAndLogRateLimit } = await import('@/lib/rate-limit')
-    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, count: 101 })
+    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 3600 })
     mockSupabaseClient = { from: vi.fn() }
     const result = await reviewRequest('req-1', 'approve')
     expect(result.error).toMatch(/Too many admin actions/)
@@ -221,7 +221,7 @@ describe('deleteRequest', () => {
 
   it('respects the admin rate limit', async () => {
     const { checkAndLogRateLimit } = await import('@/lib/rate-limit')
-    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, count: 101 })
+    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 3600 })
     mockSupabaseClient = { from: vi.fn() }
     const result = await deleteRequest('req-1')
     expect(result.error).toMatch(/Too many admin actions/)
@@ -345,7 +345,7 @@ describe('removeAdminRecipient', () => {
 
   it('respects the admin rate limit', async () => {
     const { checkAndLogRateLimit } = await import('@/lib/rate-limit')
-    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, count: 101 })
+    vi.mocked(checkAndLogRateLimit).mockResolvedValueOnce({ allowed: false, retryAfterSeconds: 3600 })
     mockSupabaseClient = { from: vi.fn() }
     const result = await removeAdminRecipient('rec-1')
     expect(result.error).toMatch(/Too many admin actions/)
