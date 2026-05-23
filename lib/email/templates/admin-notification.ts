@@ -1,20 +1,31 @@
 // lib/email/templates/admin-notification.ts
 // Admin notification email with Approve/Deny action buttons.
-// Called once per admin address — each instance has unique approve/deny URLs.
+// Called once per admin address — each instance has unique approve/deny URLs
+// (per-admin HMAC tokens, see app/(public)/actions.ts).
 // Pure function — no server-side I/O. No 'server-only' import needed.
 
 import type { LeaveType } from '@/types/database'
 import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
+import {
+  emailShell,
+  detailsTable,
+  paragraph,
+  pullQuote,
+  buttonPrimary,
+  buttonDanger,
+  buttonRow,
+  escapeHtml,
+} from './_shell'
 
 export interface AdminNotificationTemplateArgs {
   teacherName: string
   teacherEmail: string
   leaveType: LeaveType
-  startDate: string // ISO date string e.g. "2026-04-15"
+  startDate: string
   endDate: string
   reason: string | null
-  approveUrl: string // full absolute URL with ?action=approve&...&admin=encoded@email
-  denyUrl: string // full absolute URL with ?action=deny&...&admin=encoded@email
+  approveUrl: string
+  denyUrl: string
 }
 
 export function adminNotificationTemplate({
@@ -27,63 +38,35 @@ export function adminNotificationTemplate({
   approveUrl,
   denyUrl,
 }: AdminNotificationTemplateArgs): string {
+  const safeName = escapeHtml(teacherName)
+  const safeEmail = escapeHtml(teacherEmail)
   const leaveLabel = LEAVE_TYPE_LABELS[leaveType]
-  const formattedStart = formatDate(startDate)
-  const formattedEnd = formatDate(endDate)
-  const reasonText = reason ?? '(none provided)'
+  const dateRange =
+    startDate === endDate
+      ? formatDate(startDate)
+      : `${formatDate(startDate)} – ${formatDate(endDate)}`
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Time-Off Request — Action Required</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 32px 16px; color: #374151; line-height: 1.6;">
+  // approveUrl / denyUrl are constructed server-side from URL-encoded inputs,
+  // so they don't need extra escaping for the href attribute. The visible
+  // label text is fully static.
 
-    <div style="background-color: #ffffff; border-radius: 8px; padding: 32px; border: 1px solid #e5e7eb;">
+  const body = `
+    ${paragraph(`A new time-off request just landed. Approve or deny below — each link is single-use and tied to this email address.`)}
+    ${detailsTable([
+      ['Teacher', `${safeName}<div style="margin-top:2px;font-family:-apple-system,sans-serif;font-size:13px;color:#43504A;">${safeEmail}</div>`],
+      ['Leave type', leaveLabel],
+      ['Dates', dateRange],
+    ])}
+    ${reason ? pullQuote(escapeHtml(reason)) : ''}
+    ${buttonRow(buttonPrimary(approveUrl, 'Approve'), buttonDanger(denyUrl, 'Deny'))}
+    ${paragraph(`<span style="font-size:13px;color:#7A8580;">Or sign in to the admin dashboard if you'd rather act on it there.</span>`)}
+  `
 
-      <p style="margin: 0 0 16px 0; font-size: 16px;">A new time-off request requires your review.</p>
-
-      <table style="width: 100%; border-collapse: collapse; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
-        <tbody>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500; width: 40%;">Teacher</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${teacherName}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;">Email</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${teacherEmail}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;">Leave Type</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${leaveLabel}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;">Start Date</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${formattedStart}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;">End Date</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${formattedEnd}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; color: #6b7280; font-weight: 500;">Reason</td>
-            <td style="padding: 12px 16px; color: #111827;">${reasonText}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div style="margin-top: 24px;">
-        <a href="${approveUrl}" style="background-color: #16a34a; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block;">Approve</a>
-        <span style="display: inline-block; width: 12px;"></span>
-        <a href="${denyUrl}" style="background-color: #dc2626; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block;">Deny</a>
-      </div>
-
-    </div>
-
-  </div>
-</body>
-</html>`
+  return emailShell({
+    title: 'Time-Off Request — Action Required',
+    eyebrow: 'Action needed',
+    eyebrowTone: 'moss',
+    headline: `<em style="font-style:italic;">${safeName}</em> is asking for ${dateRange}.`,
+    body,
+  })
 }

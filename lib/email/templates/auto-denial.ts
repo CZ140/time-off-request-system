@@ -3,6 +3,13 @@
 // Pure function — no server-side I/O. No 'server-only' import needed.
 import type { LeaveType } from '@/types/database'
 import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
+import {
+  emailShell,
+  detailsTable,
+  paragraph,
+  signOff,
+  escapeHtml,
+} from './_shell'
 
 export interface AutoDenialTemplateArgs {
   teacherName: string
@@ -17,58 +24,29 @@ export function autoDenialTemplate({
   startDate,
   endDate,
 }: AutoDenialTemplateArgs): string {
+  const safeName = escapeHtml(teacherName)
   const leaveLabel = LEAVE_TYPE_LABELS[leaveType]
-  const formattedStart = formatDate(startDate)
-  const formattedEnd = formatDate(endDate)
+  const dateRange =
+    startDate === endDate
+      ? formatDate(startDate)
+      : `${formatDate(startDate)} – ${formatDate(endDate)}`
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Time-Off Request — Blackout Period</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 32px 16px; color: #374151; line-height: 1.6;">
+  const body = `
+    ${paragraph(`Hi ${safeName} —`)}
+    ${paragraph(`Thanks for submitting your request. Unfortunately the dates you picked fall on a school-wide blackout period, so the request has been automatically declined.`)}
+    ${detailsTable([
+      ['Leave type', leaveLabel],
+      ['Dates', dateRange],
+    ])}
+    ${paragraph(`Blackout periods (testing weeks, finals, graduation, opening PD) are set school-wide and can't be overridden for individual requests. If you'd like to plan around them, the admin office can share the current calendar.`)}
+    ${signOff()}
+  `
 
-    <div style="background-color: #ffffff; border-radius: 8px; padding: 32px; border: 1px solid #e5e7eb;">
-
-      <p style="margin: 0 0 16px 0; font-size: 16px;">Hi ${teacherName},</p>
-
-      <p style="margin: 0 0 16px 0; font-size: 16px;">
-        Thank you for submitting your time-off request. Unfortunately, we are unable to approve this
-        request because the dates you selected fall within a designated blackout period.
-      </p>
-
-      <table style="width: 100%; border-collapse: collapse; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; margin: 24px 0; font-size: 15px;">
-        <tbody>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500; width: 40%;">Leave Type</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${leaveLabel}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: 500;">Start Date</td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${formattedStart}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px 16px; color: #6b7280; font-weight: 500;">End Date</td>
-            <td style="padding: 12px 16px; color: #111827;">${formattedEnd}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p style="margin: 0 0 24px 0; font-size: 16px;">
-        Blackout periods are school-wide policy and cannot be overridden for individual requests.
-      </p>
-
-      <p style="margin: 0; font-size: 16px;">
-        Warm regards,<br />
-        <strong>School Administration</strong>
-      </p>
-
-    </div>
-
-  </div>
-</body>
-</html>`
+  return emailShell({
+    title: 'Time-Off Request — Blackout Period',
+    eyebrow: 'Request not approved',
+    eyebrowTone: 'bark',
+    headline: `These dates fall on a<br /><em style="font-style:italic;">blackout period</em>.`,
+    body,
+  })
 }
