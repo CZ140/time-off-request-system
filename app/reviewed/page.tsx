@@ -1,5 +1,7 @@
 // app/reviewed/page.tsx
 import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
+import { Wordmark } from '@/app/_components/Wordmark'
+import { CheckIcon, AlertIcon } from '@/app/_components/icons'
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | undefined }>
@@ -21,62 +23,67 @@ export default async function ReviewedPage({ searchParams }: Props) {
   const isApproved = status === 'approved'
   const isDenied = status === 'denied'
 
+  const tone: 'moss' | 'oxblood' = isApproved ? 'moss' : 'oxblood'
+  const icon = isApproved ? <CheckIcon size={18} className="text-cream" /> : <AlertIcon size={18} className="text-cream" />
+  const eyebrow = isFirst ? (isApproved ? 'Request approved' : 'Request denied') : 'Already reviewed'
+  const headline = isFirst
+    ? isApproved
+      ? { lead: 'Approved. ', italic: `${firstName(teacherName)} has been notified.` }
+      : { lead: 'Denied. ', italic: `${firstName(teacherName)} has been notified.` }
+    : { lead: 'No further action — ', italic: 'this one was already handled.' }
+  const sub = isFirst
+    ? 'Your decision has been recorded. The email confirmation is on its way.'
+    : 'You may have clicked the link twice, or another admin already acted on it.'
+
+  const dateLabel = startDate === endDate ? startDate : `${startDate} – ${endDate}`
+
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-lg w-full">
-        {/* Header — differs between first action and idempotent re-click */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            {isFirst
-              ? isApproved ? 'Request Approved' : 'Request Denied'
-              : 'Request Already Reviewed'}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {isFirst
-              ? 'Your decision has been recorded and the teacher has been notified.'
-              : 'This leave request has already been reviewed. No further action is needed.'}
-          </p>
+    <main className="min-h-screen bg-cream">
+      <header className="flex items-center justify-between border-b border-rule px-6 py-5 sm:px-14">
+        <Wordmark sublabel="Administrator" />
+        <span className="label-eyebrow">From email link</span>
+      </header>
+
+      <div className="mx-auto max-w-3xl px-6 pb-16 pt-12 sm:px-14">
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${
+              tone === 'moss' ? 'bg-moss' : 'bg-oxblood'
+            }`}
+          >
+            {icon}
+          </span>
+          <span className={`label-eyebrow ${tone === 'moss' ? 'text-moss' : 'text-oxblood'}`}>{eyebrow}</span>
         </div>
 
-        {/* Status badge */}
-        {(isApproved || isDenied) && (
-          <div className="flex justify-center mb-6">
-            <span
-              className={
-                isApproved
-                  ? 'bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full'
-                  : 'bg-red-100 text-red-800 text-sm font-medium px-3 py-1 rounded-full'
-              }
-            >
-              {isApproved ? 'Approved' : 'Denied'}
-            </span>
-          </div>
+        <h1 className="mt-5 font-display text-[36px] leading-[1.04] tracking-tight text-ink sm:text-[48px]">
+          {headline.lead}
+          <em className="italic">{headline.italic}</em>
+        </h1>
+        <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-ink-2">{sub}</p>
+
+        {(isApproved || isDenied || teacherName !== '—') && (
+          <dl className="mt-8 grid gap-5 rounded-md border border-rule bg-card p-6 sm:grid-cols-2 sm:p-7">
+            <DetailItem term="Teacher" value={teacherName} />
+            <DetailItem term="Leave type" value={leaveType} />
+            <DetailItem term="Dates" value={dateLabel} />
+            <DetailItem term="Reviewed by" value={reviewedBy} />
+          </dl>
         )}
-
-        {/* Request details */}
-        <div className="border border-gray-100 rounded-md divide-y divide-gray-100">
-          <div className="flex justify-between items-center px-4 py-3">
-            <span className="text-sm font-medium text-gray-500">Teacher Name</span>
-            <span className="text-sm text-gray-900">{teacherName}</span>
-          </div>
-          <div className="flex justify-between items-center px-4 py-3">
-            <span className="text-sm font-medium text-gray-500">Leave Type</span>
-            <span className="text-sm text-gray-900">{leaveType}</span>
-          </div>
-          <div className="flex justify-between items-center px-4 py-3">
-            <span className="text-sm font-medium text-gray-500">Start Date</span>
-            <span className="text-sm text-gray-900">{startDate}</span>
-          </div>
-          <div className="flex justify-between items-center px-4 py-3">
-            <span className="text-sm font-medium text-gray-500">End Date</span>
-            <span className="text-sm text-gray-900">{endDate}</span>
-          </div>
-          <div className="flex justify-between items-center px-4 py-3">
-            <span className="text-sm font-medium text-gray-500">Reviewed By</span>
-            <span className="text-sm text-gray-900">{reviewedBy}</span>
-          </div>
-        </div>
       </div>
     </main>
   )
+}
+
+function DetailItem({ term, value }: { term: string; value: string }) {
+  return (
+    <div>
+      <dt className="label-eyebrow">{term}</dt>
+      <dd className="mt-1 font-display text-[18px] leading-tight text-ink">{value}</dd>
+    </div>
+  )
+}
+
+function firstName(full: string): string {
+  return full.trim().split(/\s+/)[0] || full
 }
