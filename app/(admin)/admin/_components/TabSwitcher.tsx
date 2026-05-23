@@ -6,6 +6,7 @@ import RequestsTab from './RequestsTab'
 import BlackoutDatesTab from './BlackoutDatesTab'
 import RecipientsTab from './RecipientsTab'
 import StatsTab from './StatsTab'
+import CalendarTab from './CalendarTab'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
@@ -19,10 +20,10 @@ interface TabSwitcherProps {
   recipients: AdminRecipientRow[]
 }
 
-// "Soon" tabs are visible but inert — they set the visual expectation for
-// future work (Calendar view) without claiming to ship features that don't
-// exist yet. Recipients and Stats used to live here; both now have real tabs.
-const SOON_TABS: TabId[] = ['calendar']
+// All five tabs now have real implementations. The SOON_TABS list is empty —
+// kept as an array so a future placeholder tab can be added back without
+// reshaping the rendering logic.
+const SOON_TABS: TabId[] = []
 
 const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'requests', label: 'Requests' },
@@ -78,6 +79,7 @@ export default function TabSwitcher({ requests, blackoutDates, recipients }: Tab
         {activeTab === 'blackout' && <BlackoutDatesTab blackoutDates={blackoutDates} />}
         {activeTab === 'recipients' && <RecipientsTab recipients={recipients} />}
         {activeTab === 'stats' && <StatsTab requests={requests} />}
+        {activeTab === 'calendar' && <CalendarTab requests={requests} blackoutDates={blackoutDates} />}
         {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
       </div>
     </div>
