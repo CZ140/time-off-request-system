@@ -59,3 +59,6 @@ AUDIT.txt
 
 # Claude Code design-handoff bundles — temporary, downloaded for reference only
 .design-handoff/
+
+# Local screenshots from browser-driven verification (Playwright MCP). Not source.
+/*.png

@@ -24,6 +24,9 @@ function isDomainHintViolation(email: string): boolean {
   return !ALLOWED_DOMAINS_HINT.includes(domain)
 }
 
+// Form labels are kept short so all 9 options fit on a single line in the
+// 3-column grid. The full canonical labels live in LEAVE_TYPE_LABELS
+// (lib/email/utils.ts) and are used everywhere else (admin dashboard, emails).
 const LEAVE_TYPES: { value: string; label: string }[] = [
   { value: 'sick', label: 'Sick' },
   { value: 'half_day_am', label: 'Half day (AM)' },
@@ -32,8 +35,8 @@ const LEAVE_TYPES: { value: string; label: string }[] = [
   { value: 'vacation', label: 'Vacation' },
   { value: 'bereavement', label: 'Bereavement' },
   { value: 'jury_duty', label: 'Jury duty' },
-  { value: 'professional_development', label: 'Professional development' },
-  { value: 'maternity_paternity', label: 'Maternity / paternity' },
+  { value: 'professional_development', label: 'Prof. dev.' },
+  { value: 'maternity_paternity', label: 'Parental' },
 ]
 
 export default function TeacherFormPage() {
@@ -62,9 +65,9 @@ export default function TeacherFormPage() {
         <section>
           <div className="label-eyebrow mb-3 text-moss">● A request for time away</div>
           <h1 className="font-display text-[44px] leading-[1.02] tracking-tight text-ink sm:text-[56px] lg:text-[64px]">
-            Tell us when, and we&apos;ll
+            Tell us when you
             <br />
-            <em className="italic">see what we can do</em>.
+            <em className="italic">need to be out</em>.
           </h1>
 
           <form
@@ -196,7 +199,7 @@ export default function TeacherFormPage() {
                 <legend className="sr-only">Blackout period</legend>
                 <div className="flex flex-wrap gap-2.5" aria-describedby={state.errors?.is_blackout ? 'is_blackout-error' : undefined}>
                   <BlackoutToggle name="is_blackout" value="false" label="No, dates are clear" current={isBlackout} onChange={setIsBlackout} />
-                  <BlackoutToggle name="is_blackout" value="true" label="Yes — I'll explain" current={isBlackout} onChange={setIsBlackout} />
+                  <BlackoutToggle name="is_blackout" value="true" label="Yes, dates overlap" current={isBlackout} onChange={setIsBlackout} />
                 </div>
                 {isBlackout === 'true' && (
                   <p className="mt-3 rounded-sm border border-bark/40 bg-butter/40 px-3 py-2 text-sm text-bark">
