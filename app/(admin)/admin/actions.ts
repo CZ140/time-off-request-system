@@ -81,3 +81,23 @@ export async function deleteBlackoutDate(id: string): Promise<{ error?: string }
   if (error) return { error: 'Failed to delete blackout date. Please try again.' }
   return {}
 }
+
+// --- Request CRUD ---
+
+// Hard delete of a request row. Surfaces from the admin dashboard's Requests
+// tab via the confirm-then-delete pattern (same as blackout dates).
+//
+// No status restriction: an admin can delete any row including 'approved'.
+// Note that deleting a row does NOT unsend any approval/denial email already
+// dispatched to the teacher — this action is intended for cleanup of test data
+// or genuinely stale records, not for reversing decisions.
+export async function deleteRequest(id: string): Promise<{ error?: string }> {
+  if (!(await adminRateLimitOk())) {
+    return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
+  }
+
+  const supabase = createClient()
+  const { error } = await supabase.from('requests').delete().eq('id', id)
+  if (error) return { error: 'Failed to delete request. Please try again.' }
+  return {}
+}

@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Database, RequestStatus } from '@/types/database'
 import { LEAVE_TYPE_LABELS, formatDate } from '@/lib/email/utils'
+import { deleteRequest } from '../actions'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 
@@ -34,8 +36,26 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 ]
 
 export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
+  const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [sortKey, setSortKey] = useState<SortKey>('submitted_desc')
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isDeleting, startDelete] = useTransition()
+
+  function handleDelete(id: string) {
+    startDelete(async () => {
+      const result = await deleteRequest(id)
+      if (result.error) {
+        setDeleteError(result.error)
+        setConfirmId(null)
+        return
+      }
+      setDeleteError(null)
+      setConfirmId(null)
+      router.refresh()
+    })
+  }
 
   // Counts per status — drives the filter pill labels and the "you have N" headline.
   const counts = useMemo(() => {
@@ -120,6 +140,12 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
         })}
       </div>
 
+      {deleteError && (
+        <p className="mb-3 rounded-sm border border-oxblood/30 bg-oxblood/10 px-3 py-2 text-sm text-oxblood">
+          {deleteError}
+        </p>
+      )}
+
       {/* Cards list */}
       {sorted.length === 0 ? (
         <div className="rounded-md border border-dashed border-rule bg-card p-10 text-center text-ink-3">
@@ -129,7 +155,15 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
       ) : (
         <ul className="grid gap-3">
           {sorted.map((r) => (
-            <RequestCard key={r.id} r={r} />
+            <RequestCard
+              key={r.id}
+              r={r}
+              confirming={confirmId === r.id}
+              isDeleting={isDeleting}
+              onAskDelete={() => setConfirmId(r.id)}
+              onConfirmDelete={() => handleDelete(r.id)}
+              onCancelDelete={() => setConfirmId(null)}
+            />
           ))}
         </ul>
       )}
@@ -137,7 +171,16 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
   )
 }
 
-function RequestCard({ r }: { r: RequestRow }) {
+type RequestCardProps = {
+  r: RequestRow
+  confirming: boolean
+  isDeleting: boolean
+  onAskDelete: () => void
+  onConfirmDelete: () => void
+  onCancelDelete: () => void
+}
+
+function RequestCard({ r, confirming, isDeleting, onAskDelete, onConfirmDelete, onCancelDelete }: RequestCardProps) {
   const chip = STATUS_CHIP[r.status]
   const days = dayCount(r.start_date, r.end_date)
   const dateLabel =
@@ -187,6 +230,36 @@ function RequestCard({ r }: { r: RequestRow }) {
         {r.reviewed_by && (
           <div className="text-[11px] text-ink-3">by {r.reviewed_by}</div>
         )}
+
+        {/* Delete affordance: inline confirm pattern, matches the blackout tab. */}
+        <div className="mt-1.5">
+          {confirming ? (
+            <span className="flex items-center gap-2">
+              <button
+                onClick={onConfirmDelete}
+                disabled={isDeleting}
+                className="label-eyebrow text-oxblood transition-colors hover:opacity-70 disabled:opacity-40"
+              >
+                {isDeleting ? 'Deleting…' : 'Confirm?'}
+              </button>
+              <button
+                onClick={onCancelDelete}
+                disabled={isDeleting}
+                className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
+              >
+                Cancel
+              </button>
+            </span>
+          ) : (
+            <button
+              onClick={onAskDelete}
+              className="label-eyebrow text-ink-3 transition-colors hover:text-oxblood"
+              aria-label={`Delete request from ${r.teacher_name}`}
+            >
+              Delete
+            </button>
+          )}
+        </div>
       </div>
     </li>
   )
