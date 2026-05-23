@@ -224,139 +224,147 @@ function RequestCard({
       : `${formatDate(r.start_date)} – ${formatDate(r.end_date)}`
 
   return (
-    <li className="grid gap-5 rounded-md border border-rule bg-card p-5 sm:grid-cols-[200px_1fr_160px] sm:items-center sm:gap-6">
-      <div>
-        <div className="font-display text-[22px] leading-tight text-ink">{r.teacher_name}</div>
-        <div className="mt-0.5 text-[12px] font-semibold text-ink-3">
-          ref {r.id.slice(0, 8)}
-        </div>
-        <a
-          href={`mailto:${r.teacher_email}`}
-          className="mt-1 inline-block break-all text-[12px] text-ink-2 underline decoration-dotted underline-offset-2 hover:text-moss"
-        >
-          {r.teacher_email}
-        </a>
-      </div>
-
-      <div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="label-eyebrow text-moss">{LEAVE_TYPE_LABELS[r.leave_type]}</span>
-          <span className="hidden h-3 w-px bg-rule sm:inline" />
-          <span className="text-[14px] font-bold">{dateLabel}</span>
-          <span className="text-[12px] text-ink-3">· {days}d</span>
-          {r.is_blackout && (
-            <span className="rounded-sm border border-bark/40 bg-butter/30 px-2 py-px text-[10px] font-bold uppercase tracking-wider text-bark">
-              Blackout
-            </span>
-          )}
-        </div>
-        {r.reason && (
-          <div className="mt-2 font-display text-[16px] italic text-ink-2">
-            &ldquo;{r.reason}&rdquo;
+    <li className="rounded-md border border-rule bg-card p-5">
+      <div className="grid gap-5 sm:grid-cols-[200px_1fr_160px] sm:items-center sm:gap-6">
+        <div>
+          <div className="font-display text-[22px] leading-tight text-ink">{r.teacher_name}</div>
+          <div className="mt-0.5 text-[12px] font-semibold text-ink-3">
+            ref {r.id.slice(0, 8)}
           </div>
-        )}
-      </div>
+          <a
+            href={`mailto:${r.teacher_email}`}
+            className="mt-1 inline-block break-all text-[12px] text-ink-2 underline decoration-dotted underline-offset-2 hover:text-moss"
+          >
+            {r.teacher_email}
+          </a>
+        </div>
 
-      <div className="flex flex-col items-start gap-2 sm:items-end">
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide ${chip.bg} ${chip.fg}`}>
-          {chip.label}
-        </span>
-        <div className="text-[11px] text-ink-3">{formatSubmitted(r.submitted_at)}</div>
-        {r.reviewed_by && (
-          <div className="text-[11px] text-ink-3">by {r.reviewed_by}</div>
-        )}
-
-        {/* Approve / Deny for pending rows. Inline confirm step mirrors the
-            email-link flow (which also has a click-through confirmation). */}
-        {r.status === 'pending' && (
-          <div className="flex items-center gap-1.5">
-            {confirm?.kind === 'approve' ? (
-              <>
-                <button
-                  onClick={() => onConfirmReview('approve')}
-                  disabled={isProcessing}
-                  className="rounded-sm bg-moss px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:bg-moss-alt disabled:opacity-40"
-                >
-                  {isProcessing ? 'Approving…' : 'Confirm approve?'}
-                </button>
-                <button
-                  onClick={onCancel}
-                  disabled={isProcessing}
-                  className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : confirm?.kind === 'deny' ? (
-              <>
-                <button
-                  onClick={() => onConfirmReview('deny')}
-                  disabled={isProcessing}
-                  className="rounded-sm bg-oxblood px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:opacity-90 disabled:opacity-40"
-                >
-                  {isProcessing ? 'Denying…' : 'Confirm deny?'}
-                </button>
-                <button
-                  onClick={onCancel}
-                  disabled={isProcessing}
-                  className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => onAskReview('approve')}
-                  className="rounded-sm bg-moss px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:bg-moss-alt"
-                  aria-label={`Approve request from ${r.teacher_name}`}
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => onAskReview('deny')}
-                  className="rounded-sm border border-rule bg-card px-2.5 py-1 text-[11px] font-bold text-ink-2 transition-colors hover:border-oxblood hover:text-oxblood"
-                  aria-label={`Deny request from ${r.teacher_name}`}
-                >
-                  Deny
-                </button>
-              </>
+        <div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="label-eyebrow text-moss">{LEAVE_TYPE_LABELS[r.leave_type]}</span>
+            <span className="hidden h-3 w-px bg-rule sm:inline" />
+            <span className="text-[14px] font-bold">{dateLabel}</span>
+            <span className="text-[12px] text-ink-3">· {days}d</span>
+            {r.is_blackout && (
+              <span className="rounded-sm border border-bark/40 bg-butter/30 px-2 py-px text-[10px] font-bold uppercase tracking-wider text-bark">
+                Blackout
+              </span>
             )}
           </div>
-        )}
+          {r.reason && (
+            <div className="mt-2 font-display text-[16px] italic text-ink-2">
+              &ldquo;{r.reason}&rdquo;
+            </div>
+          )}
+        </div>
 
-        {/* Delete affordance: inline confirm pattern, matches the blackout tab. */}
-        <div>
-          {confirm?.kind === 'delete' ? (
-            <span className="flex items-center gap-2">
+        <div className="flex flex-col items-start gap-1.5 sm:items-end">
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide ${chip.bg} ${chip.fg}`}>
+            {chip.label}
+          </span>
+          <div className="text-[11px] text-ink-3">{formatSubmitted(r.submitted_at)}</div>
+          {r.reviewed_by && (
+            <div className="text-[11px] text-ink-3">by {r.reviewed_by}</div>
+          )}
+
+          {/* Delete stays small + eyebrow in the top-right corner — irreversible
+              destructive action shouldn't be a primary affordance. */}
+          <div className="mt-1">
+            {confirm?.kind === 'delete' ? (
+              <span className="flex items-center gap-2">
+                <button
+                  onClick={onConfirmDelete}
+                  disabled={isProcessing}
+                  className="label-eyebrow text-oxblood transition-colors hover:opacity-70 disabled:opacity-40"
+                >
+                  {isProcessing ? 'Deleting…' : 'Confirm?'}
+                </button>
+                <button
+                  onClick={onCancel}
+                  disabled={isProcessing}
+                  className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+              </span>
+            ) : (
               <button
-                onClick={onConfirmDelete}
-                disabled={isProcessing}
-                className="label-eyebrow text-oxblood transition-colors hover:opacity-70 disabled:opacity-40"
+                onClick={onAskDelete}
+                className="label-eyebrow text-ink-3 transition-colors hover:text-oxblood"
+                aria-label={`Delete request from ${r.teacher_name}`}
               >
-                {isProcessing ? 'Deleting…' : 'Confirm?'}
+                Delete
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Action bar for pending rows — full-width, larger buttons, naturally
+          left-aligned. Sits below the request body with a dashed-rule divider
+          so it reads as a deliberate "what do you want to do" prompt. */}
+      {r.status === 'pending' && (
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-dashed border-rule pt-4">
+          {confirm?.kind === 'approve' ? (
+            <>
+              <button
+                onClick={() => onConfirmReview('approve')}
+                disabled={isProcessing}
+                className="rounded-sm bg-moss px-5 py-2.5 text-[14px] font-bold text-cream transition-colors hover:bg-moss-alt disabled:opacity-40"
+              >
+                {isProcessing ? 'Approving…' : `Confirm approve · ${firstName(r.teacher_name)}`}
               </button>
               <button
                 onClick={onCancel}
                 disabled={isProcessing}
-                className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
+                className="rounded-sm border border-rule bg-card px-4 py-2.5 text-[13px] font-bold text-ink-2 transition-colors hover:bg-cream-alt disabled:opacity-40"
               >
                 Cancel
               </button>
-            </span>
+            </>
+          ) : confirm?.kind === 'deny' ? (
+            <>
+              <button
+                onClick={() => onConfirmReview('deny')}
+                disabled={isProcessing}
+                className="rounded-sm bg-oxblood px-5 py-2.5 text-[14px] font-bold text-cream transition-colors hover:opacity-90 disabled:opacity-40"
+              >
+                {isProcessing ? 'Denying…' : `Confirm deny · ${firstName(r.teacher_name)}`}
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={isProcessing}
+                className="rounded-sm border border-rule bg-card px-4 py-2.5 text-[13px] font-bold text-ink-2 transition-colors hover:bg-cream-alt disabled:opacity-40"
+              >
+                Cancel
+              </button>
+            </>
           ) : (
-            <button
-              onClick={onAskDelete}
-              className="label-eyebrow text-ink-3 transition-colors hover:text-oxblood"
-              aria-label={`Delete request from ${r.teacher_name}`}
-            >
-              Delete
-            </button>
+            <>
+              <button
+                onClick={() => onAskReview('approve')}
+                className="rounded-sm bg-moss px-5 py-2.5 text-[14px] font-bold text-cream transition-colors hover:bg-moss-alt"
+                aria-label={`Approve request from ${r.teacher_name}`}
+              >
+                Approve
+              </button>
+              <button
+                onClick={() => onAskReview('deny')}
+                className="rounded-sm border border-rule bg-card px-5 py-2.5 text-[14px] font-bold text-ink-2 transition-colors hover:border-oxblood hover:text-oxblood"
+                aria-label={`Deny request from ${r.teacher_name}`}
+              >
+                Deny
+              </button>
+            </>
           )}
         </div>
-      </div>
+      )}
     </li>
   )
+}
+
+function firstName(full: string): string {
+  return full.trim().split(/\s+/)[0] || full
 }
 
 // Inclusive day count between two ISO date strings.
