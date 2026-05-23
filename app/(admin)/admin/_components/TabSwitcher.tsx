@@ -8,41 +8,97 @@ import BlackoutDatesTab from './BlackoutDatesTab'
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
 
-type Tab = 'requests' | 'blackout'
+type TabId = 'requests' | 'blackout' | 'recipients' | 'calendar' | 'stats'
 
 interface TabSwitcherProps {
   requests: RequestRow[]
   blackoutDates: BlackoutDateRow[]
 }
 
+// "Soon" tabs are visible but inert — they set the visual expectation for
+// future work (Recipients management, Calendar view, Stats) without claiming
+// to ship features that don't exist yet.
+const SOON_TABS: TabId[] = ['recipients', 'calendar', 'stats']
+
+const TAB_DEFS: { id: TabId; label: string }[] = [
+  { id: 'requests', label: 'Requests' },
+  { id: 'blackout', label: 'Blackouts' },
+  { id: 'recipients', label: 'Recipients' },
+  { id: 'calendar', label: 'Calendar' },
+  { id: 'stats', label: 'Stats' },
+]
+
 export default function TabSwitcher({ requests, blackoutDates }: TabSwitcherProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('requests')
+  const [activeTab, setActiveTab] = useState<TabId>('requests')
+
+  const pendingCount = requests.filter((r) => r.status === 'pending').length
 
   return (
     <div>
-      {/* Tab navigation */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {(['requests', 'blackout'] as Tab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
-              activeTab === tab
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab === 'requests' ? 'Requests' : 'Blackout Dates'}
-          </button>
-        ))}
+      <div className="flex gap-1 overflow-x-auto border-b border-rule bg-cream-alt px-6 sm:px-14">
+        {TAB_DEFS.map((tab) => {
+          const isActive = activeTab === tab.id
+          const isSoon = SOON_TABS.includes(tab.id)
+          return (
+            <button
+              key={tab.id}
+              onClick={() => !isSoon && setActiveTab(tab.id)}
+              disabled={isSoon}
+              aria-current={isActive ? 'page' : undefined}
+              className={`-mb-px flex shrink-0 items-center gap-2 border-x border-t-2 px-5 py-3.5 text-sm font-bold transition-colors ${
+                isActive
+                  ? 'border-x-rule border-t-moss bg-cream text-ink'
+                  : isSoon
+                    ? 'cursor-not-allowed border-transparent text-ink-3'
+                    : 'border-transparent text-ink-2 hover:text-ink'
+              }`}
+            >
+              {tab.label}
+              {tab.id === 'requests' && pendingCount > 0 && (
+                <span className="rounded-full bg-moss px-1.5 py-px text-[10px] font-bold text-cream">
+                  {pendingCount}
+                </span>
+              )}
+              {isSoon && (
+                <span className="label-eyebrow rounded-full border border-rule px-1.5 py-px text-[9px] text-ink-3">
+                  soon
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Tab content */}
-      {activeTab === 'requests' ? (
-        <RequestsTab requests={requests} />
-      ) : (
-        <BlackoutDatesTab blackoutDates={blackoutDates} />
-      )}
+      <div className="px-6 py-8 sm:px-14">
+        {activeTab === 'requests' && <RequestsTab requests={requests} />}
+        {activeTab === 'blackout' && <BlackoutDatesTab blackoutDates={blackoutDates} />}
+        {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
+      </div>
+    </div>
+  )
+}
+
+function ComingSoonPanel({ tab }: { tab: TabId }) {
+  const copy: Record<string, { title: string; body: string }> = {
+    recipients: {
+      title: 'Recipients',
+      body: 'Manage the list of administrators who get notified when a request comes in. Currently the recipient list is set in an environment variable.',
+    },
+    calendar: {
+      title: 'Calendar',
+      body: 'A month view of who is out when — overlaid with blackout periods. So you can see coverage at a glance.',
+    },
+    stats: {
+      title: 'Stats',
+      body: 'Top submitters, leave-type breakdown, approval rate over time. Lightweight — not a dashboard product.',
+    },
+  }
+  const c = copy[tab]
+  return (
+    <div className="max-w-xl rounded-md border border-dashed border-rule bg-card p-8">
+      <div className="label-eyebrow text-bark">Coming soon</div>
+      <h2 className="mt-2 font-display text-[32px] leading-tight text-ink">{c.title}</h2>
+      <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{c.body}</p>
     </div>
   )
 }

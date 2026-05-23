@@ -1,161 +1,233 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import type { Database } from '@/types/database'
-import type { RequestStatus } from '@/types/database'
+import { useMemo, useState } from 'react'
+import type { Database, RequestStatus } from '@/types/database'
 import { LEAVE_TYPE_LABELS, formatDate } from '@/lib/email/utils'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type SortColumn = keyof RequestRow
-type SortDirection = 'asc' | 'desc'
-
-interface SortState { column: SortColumn; direction: SortDirection }
 
 // Filter pill config — values MUST match RequestStatus literals (not display strings)
 const FILTER_OPTIONS: { value: 'all' | RequestStatus; label: string }[] = [
-  { value: 'all',        label: 'All' },
-  { value: 'pending',    label: 'Pending' },
-  { value: 'approved',   label: 'Approved' },
-  { value: 'denied',     label: 'Denied' },
-  { value: 'auto_denied', label: 'Auto-Denied' },
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'denied', label: 'Denied' },
+  { value: 'auto_denied', label: 'Auto-denied' },
 ]
 
-// Status badge color map per locked decisions
-const STATUS_BADGE: Record<RequestStatus, { label: string; className: string }> = {
-  pending:     { label: 'Pending',     className: 'bg-yellow-100 text-yellow-800' },
-  approved:    { label: 'Approved',    className: 'bg-green-100 text-green-800' },
-  denied:      { label: 'Denied',      className: 'bg-red-100 text-red-800' },
-  auto_denied: { label: 'Auto-Denied', className: 'bg-gray-100 text-gray-600' },
+// Map of status → chip background + foreground (warm-tinted, not generic grays).
+const STATUS_CHIP: Record<RequestStatus, { label: string; bg: string; fg: string }> = {
+  pending: { label: 'Pending', bg: 'bg-chip-pending-bg', fg: 'text-bark' },
+  approved: { label: 'Approved', bg: 'bg-chip-approved-bg', fg: 'text-moss' },
+  denied: { label: 'Denied', bg: 'bg-chip-denied-bg', fg: 'text-oxblood' },
+  auto_denied: { label: 'Auto-denied', bg: 'bg-chip-auto-bg', fg: 'text-ink-3' },
 }
 
-const COLUMNS: { key: SortColumn; label: string }[] = [
-  { key: 'teacher_name',  label: 'Teacher Name' },
-  { key: 'teacher_email', label: 'Email' },
-  { key: 'leave_type',    label: 'Leave Type' },
-  { key: 'start_date',    label: 'Start Date' },
-  { key: 'end_date',      label: 'End Date' },
-  { key: 'reason',        label: 'Reason' },
-  { key: 'is_blackout',   label: 'Blackout?' },
-  { key: 'status',        label: 'Status' },
-  { key: 'submitted_at',  label: 'Submitted' },
-  { key: 'reviewed_by',   label: 'Reviewed By' },
+type SortKey = 'submitted_desc' | 'submitted_asc' | 'start_asc' | 'start_desc' | 'teacher_asc'
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'submitted_desc', label: 'Newest first' },
+  { value: 'submitted_asc', label: 'Oldest first' },
+  { value: 'start_asc', label: 'Soonest start date' },
+  { value: 'start_desc', label: 'Latest start date' },
+  { value: 'teacher_asc', label: 'Teacher (A–Z)' },
 ]
 
 export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
-  const [sort, setSort] = useState<SortState>({ column: 'submitted_at', direction: 'desc' })
-  const [expandedReason, setExpandedReason] = useState<string | null>(null)
+  const [sortKey, setSortKey] = useState<SortKey>('submitted_desc')
 
-  function handleColumnClick(column: SortColumn) {
-    setSort(prev =>
-      prev.column === column
-        ? { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-        : { column, direction: 'asc' }
-    )
-  }
+  // Counts per status — drives the filter pill labels and the "you have N" headline.
+  const counts = useMemo(() => {
+    const c: Record<RequestStatus, number> = { pending: 0, approved: 0, denied: 0, auto_denied: 0 }
+    for (const r of requests) c[r.status]++
+    return c
+  }, [requests])
 
   const filtered = useMemo(() => {
     if (statusFilter === 'all') return requests
-    return requests.filter(r => r.status === statusFilter)
+    return requests.filter((r) => r.status === statusFilter)
   }, [requests, statusFilter])
 
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      // Use String(value ?? '') to safely handle null columns (reason, reviewed_by)
-      const av = String(a[sort.column] ?? '')
-      const bv = String(b[sort.column] ?? '')
-      const cmp = av.localeCompare(bv)
-      return sort.direction === 'asc' ? cmp : -cmp
+    const arr = [...filtered]
+    arr.sort((a, b) => {
+      switch (sortKey) {
+        case 'submitted_asc':
+          return a.submitted_at.localeCompare(b.submitted_at)
+        case 'submitted_desc':
+          return b.submitted_at.localeCompare(a.submitted_at)
+        case 'start_asc':
+          return a.start_date.localeCompare(b.start_date)
+        case 'start_desc':
+          return b.start_date.localeCompare(a.start_date)
+        case 'teacher_asc':
+          return a.teacher_name.localeCompare(b.teacher_name)
+      }
     })
-  }, [filtered, sort])
+    return arr
+  }, [filtered, sortKey])
+
+  const headline = headlineFor(counts.pending)
 
   return (
     <div>
-      {/* Status filter pills */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {FILTER_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setStatusFilter(opt.value)}
-            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-              statusFilter === opt.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+      {/* Heading row — left: serif callout, right: sort dropdown */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-[32px] leading-tight tracking-tight text-ink sm:text-[40px]">
+            {headline.before}
+            <em className="italic text-moss">{headline.count}</em>
+            {headline.after}
+          </h1>
+          <p className="mt-1 text-[14px] text-ink-2">{headline.sub}</p>
+        </div>
+
+        <label className="flex items-center gap-2 self-start text-sm sm:self-auto">
+          <span className="label-eyebrow">Sort</span>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            className="rounded-sm border border-rule bg-card px-3 py-2 text-[13px] font-semibold text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/30"
           >
-            {opt.label}
-          </button>
-        ))}
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
-      {/* Scrollable table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {COLUMNS.map(col => (
-                <th
-                  key={col.key}
-                  onClick={() => handleColumnClick(col.key)}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none whitespace-nowrap hover:bg-gray-100 transition-colors"
-                >
-                  {col.label}
-                  {sort.column === col.key && (
-                    <span className="ml-1">{sort.direction === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {sorted.length === 0 ? (
-              <tr>
-                <td colSpan={COLUMNS.length} className="px-4 py-8 text-center text-gray-400">
-                  No requests found.
-                </td>
-              </tr>
-            ) : (
-              sorted.map(row => {
-                const badge = STATUS_BADGE[row.status]
-                return (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{row.teacher_name}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.teacher_email}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{LEAVE_TYPE_LABELS[row.leave_type]}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{formatDate(row.start_date)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{formatDate(row.end_date)}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[200px]">
-                      {row.reason ? (
-                        <button
-                          onClick={() => setExpandedReason(expandedReason === row.id ? null : row.id)}
-                          className="text-left w-full hover:text-gray-900 transition-colors"
-                        >
-                          <span className={expandedReason === row.id ? '' : 'truncate block'}>
-                            {row.reason}
-                          </span>
-                          {row.reason.length > 40 && (
-                            <span className="text-xs text-blue-500 mt-0.5 block">
-                              {expandedReason === row.id ? 'collapse' : 'expand'}
-                            </span>
-                          )}
-                        </button>
-                      ) : '—'}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.is_blackout ? 'Yes' : 'No'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{new Date(row.submitted_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-600">{row.reviewed_by ?? '—'}</td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+      {/* Status filter pills */}
+      <div className="mb-5 flex flex-wrap gap-1.5">
+        {FILTER_OPTIONS.map((opt) => {
+          const count = opt.value === 'all' ? requests.length : counts[opt.value]
+          const active = statusFilter === opt.value
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setStatusFilter(opt.value)}
+              className={`rounded-full border px-3.5 py-1.5 text-[12px] font-bold transition-colors ${
+                active
+                  ? 'border-ink bg-ink text-cream'
+                  : 'border-rule bg-card text-ink-2 hover:bg-cream-alt'
+              }`}
+            >
+              {opt.label} <span className={active ? 'text-cream/70' : 'text-ink-3'}>({count})</span>
+            </button>
+          )
+        })}
       </div>
+
+      {/* Cards list */}
+      {sorted.length === 0 ? (
+        <div className="rounded-md border border-dashed border-rule bg-card p-10 text-center text-ink-3">
+          <div className="label-eyebrow mb-1">Nothing here</div>
+          <p className="text-[15px] text-ink-2">No requests match the current filter.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-3">
+          {sorted.map((r) => (
+            <RequestCard key={r.id} r={r} />
+          ))}
+        </ul>
+      )}
     </div>
   )
+}
+
+function RequestCard({ r }: { r: RequestRow }) {
+  const chip = STATUS_CHIP[r.status]
+  const days = dayCount(r.start_date, r.end_date)
+  const dateLabel =
+    r.start_date === r.end_date
+      ? formatDate(r.start_date)
+      : `${formatDate(r.start_date)} – ${formatDate(r.end_date)}`
+
+  return (
+    <li className="grid gap-5 rounded-md border border-rule bg-card p-5 sm:grid-cols-[200px_1fr_160px] sm:items-center sm:gap-6">
+      <div>
+        <div className="font-display text-[22px] leading-tight text-ink">{r.teacher_name}</div>
+        <div className="mt-0.5 text-[12px] font-semibold text-ink-3">
+          ref {r.id.slice(0, 8)}
+        </div>
+        <a
+          href={`mailto:${r.teacher_email}`}
+          className="mt-1 inline-block break-all text-[12px] text-ink-2 underline decoration-dotted underline-offset-2 hover:text-moss"
+        >
+          {r.teacher_email}
+        </a>
+      </div>
+
+      <div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="label-eyebrow text-moss">{LEAVE_TYPE_LABELS[r.leave_type]}</span>
+          <span className="hidden h-3 w-px bg-rule sm:inline" />
+          <span className="text-[14px] font-bold">{dateLabel}</span>
+          <span className="text-[12px] text-ink-3">· {days}d</span>
+          {r.is_blackout && (
+            <span className="rounded-sm border border-bark/40 bg-butter/30 px-2 py-px text-[10px] font-bold uppercase tracking-wider text-bark">
+              Blackout
+            </span>
+          )}
+        </div>
+        {r.reason && (
+          <div className="mt-2 font-display text-[16px] italic text-ink-2">
+            &ldquo;{r.reason}&rdquo;
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col items-start gap-1.5 sm:items-end">
+        <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide ${chip.bg} ${chip.fg}`}>
+          {chip.label}
+        </span>
+        <div className="text-[11px] text-ink-3">{formatSubmitted(r.submitted_at)}</div>
+        {r.reviewed_by && (
+          <div className="text-[11px] text-ink-3">by {r.reviewed_by}</div>
+        )}
+      </div>
+    </li>
+  )
+}
+
+// Inclusive day count between two ISO date strings.
+function dayCount(start: string, end: string): number {
+  const s = new Date(start + 'T00:00:00').getTime()
+  const e = new Date(end + 'T00:00:00').getTime()
+  return Math.round((e - s) / 86_400_000) + 1
+}
+
+function formatSubmitted(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+// Friendly headline based on pending count — "you have three requests to look at".
+function headlineFor(pending: number) {
+  if (pending === 0) {
+    return {
+      before: 'All caught up — ',
+      count: 'no',
+      after: ' requests pending.',
+      sub: 'When a teacher submits, it will show up here first.',
+    }
+  }
+  if (pending === 1) {
+    return {
+      before: 'You have ',
+      count: 'one',
+      after: ' request to look at.',
+      sub: 'Sorted with the newest at the top by default.',
+    }
+  }
+  const words = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+  const word = words[pending] ?? String(pending)
+  return {
+    before: 'You have ',
+    count: word,
+    after: ' requests to look at.',
+    sub: 'Sorted with the newest at the top by default.',
+  }
 }

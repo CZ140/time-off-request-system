@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import TabSwitcher from '../_components/TabSwitcher'
 import { logoutAdmin } from '../actions'
+import { Wordmark } from '@/app/_components/Wordmark'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
@@ -26,26 +27,29 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Time-Off Requests — Admin</h1>
-        <form action={logoutAdmin}>
-          <button
-            type="submit"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            Logout
-          </button>
-        </form>
+    <div className="min-h-screen bg-cream">
+      <header className="flex items-center justify-between border-b border-rule bg-card px-6 py-5 sm:px-14">
+        <Wordmark sublabel="Administrator" />
+        <div className="flex items-center gap-5 text-[13px]">
+          <span className="hidden text-ink-2 sm:inline">Signed in as the administrator</span>
+          <form action={logoutAdmin}>
+            <button
+              type="submit"
+              className="label-eyebrow text-ink-2 transition-colors hover:text-oxblood"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </header>
-      <main className="px-6 py-6">
+
+      <main>
         {fetchError && (
-          <p className="mb-4 text-sm text-red-600">Unable to load data. Please refresh.</p>
+          <div className="mx-6 mt-6 rounded-sm border border-oxblood/30 bg-oxblood/10 px-4 py-3 text-sm text-oxblood sm:mx-14">
+            Unable to load data. Please refresh.
+          </div>
         )}
-        <TabSwitcher
-          requests={requests}
-          blackoutDates={blackoutDates}
-        />
+        <TabSwitcher requests={requests} blackoutDates={blackoutDates} />
       </main>
     </div>
   )
