@@ -30,9 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files — .env.local is secret, .env.example is safe to commit
-.env.local
-.env*.local
+# env files — every local-only .env is secret, EXCEPT .env.example which is
+# the committed template. Order matters: deny .env* broadly, then explicitly
+# re-allow .env.example.
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,3 +42,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor state
+.vscode/
+.idea/
+
+# supabase cli local state
+supabase/.temp/
+
+# internal planning artifacts — kept on disk for local reference, not pushed
+.planning/
+AUDIT.txt
