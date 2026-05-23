@@ -11,6 +11,8 @@ export type LeaveType =
   | 'jury_duty'
   | 'professional_development'
   | 'maternity_paternity'
+  | 'half_day_am'
+  | 'half_day_pm'
 
 export type RequestStatus = 'pending' | 'approved' | 'denied' | 'auto_denied'
 

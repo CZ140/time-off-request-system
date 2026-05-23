@@ -12,6 +12,8 @@ export const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
   jury_duty: 'Jury Duty',
   professional_development: 'Professional Development',
   maternity_paternity: 'Maternity / Paternity Leave',
+  half_day_am: 'Half Day (AM)',
+  half_day_pm: 'Half Day (PM)',
 }
 
 export function formatDate(iso: string): string {

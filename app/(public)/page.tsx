@@ -26,6 +26,8 @@ function isDomainHintViolation(email: string): boolean {
 
 const LEAVE_TYPES: { value: string; label: string }[] = [
   { value: 'sick', label: 'Sick' },
+  { value: 'half_day_am', label: 'Half day (AM)' },
+  { value: 'half_day_pm', label: 'Half day (PM)' },
   { value: 'personal', label: 'Personal' },
   { value: 'vacation', label: 'Vacation' },
   { value: 'bereavement', label: 'Bereavement' },

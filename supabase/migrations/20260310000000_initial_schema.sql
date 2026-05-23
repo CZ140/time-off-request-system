@@ -12,7 +12,9 @@ CREATE TYPE leave_type AS ENUM (
   'bereavement',
   'jury_duty',
   'professional_development',
-  'maternity_paternity'
+  'maternity_paternity',
+  'half_day_am',
+  'half_day_pm'
 );
 
 CREATE TYPE request_status AS ENUM (
