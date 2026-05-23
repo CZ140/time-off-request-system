@@ -19,10 +19,17 @@ export default async function AdminDashboardPage() {
         supabase.from('requests').select('*').order('submitted_at', { ascending: false }),
         supabase.from('blackout_dates').select('*').order('start_date', { ascending: true }),
       ])
-    if (reqErr || bdErr) throw new Error('db')
+    if (reqErr || bdErr) {
+      // Surface the underlying Supabase error so misconfiguration (missing env
+      // vars, paused project, RLS surprise, missing tables) shows up in the
+      // server log instead of silently producing an empty dashboard.
+      console.error('[admin/dashboard] fetch failed', { reqErr, bdErr })
+      throw new Error('db')
+    }
     requests = (requestsRaw ?? []) as RequestRow[]
     blackoutDates = (blackoutDatesRaw ?? []) as BlackoutDateRow[]
-  } catch {
+  } catch (e) {
+    console.error('[admin/dashboard] caught', e)
     fetchError = true
   }
 
