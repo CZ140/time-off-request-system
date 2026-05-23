@@ -48,3 +48,16 @@ CREATE TABLE blackout_dates (
   end_date   DATE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ── Row Level Security ───────────────────────────────────────────────────
+-- Both application tables: RLS enabled with NO policies = deny-all to
+-- anon and authenticated keys. The application accesses both tables via
+-- SUPABASE_SERVICE_ROLE_KEY (lib/supabase/server.ts), which bypasses RLS.
+--
+-- NOTE: this migration was amended after initial deployment to add these
+-- statements (see 20260522000001_enable_rls_existing_tables.sql). Remote
+-- databases created before that amendment will not have RLS applied just
+-- by running this file; they need the follow-up migration.
+
+ALTER TABLE requests        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blackout_dates  ENABLE ROW LEVEL SECURITY;
