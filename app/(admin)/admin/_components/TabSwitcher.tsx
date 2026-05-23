@@ -5,6 +5,7 @@ import type { Database } from '@/types/database'
 import RequestsTab from './RequestsTab'
 import BlackoutDatesTab from './BlackoutDatesTab'
 import RecipientsTab from './RecipientsTab'
+import StatsTab from './StatsTab'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
@@ -19,9 +20,9 @@ interface TabSwitcherProps {
 }
 
 // "Soon" tabs are visible but inert — they set the visual expectation for
-// future work (Calendar view, Stats) without claiming to ship features that
-// don't exist yet. Recipients used to live here; it now has a real tab.
-const SOON_TABS: TabId[] = ['calendar', 'stats']
+// future work (Calendar view) without claiming to ship features that don't
+// exist yet. Recipients and Stats used to live here; both now have real tabs.
+const SOON_TABS: TabId[] = ['calendar']
 
 const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'requests', label: 'Requests' },
@@ -76,6 +77,7 @@ export default function TabSwitcher({ requests, blackoutDates, recipients }: Tab
         {activeTab === 'requests' && <RequestsTab requests={requests} />}
         {activeTab === 'blackout' && <BlackoutDatesTab blackoutDates={blackoutDates} />}
         {activeTab === 'recipients' && <RecipientsTab recipients={recipients} />}
+        {activeTab === 'stats' && <StatsTab requests={requests} />}
         {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
       </div>
     </div>
