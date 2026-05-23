@@ -39,6 +39,17 @@ vi.mock('@/lib/auth/tokens', () => ({
   defaultApprovalExpiry: vi.fn(() => 1700000000),
 }))
 
+// Replaces the old process.env.ADMIN_EMAILS read. Tests that exercise the
+// "request was inserted and admins are being notified" path need this so
+// getAdminRecipients() doesn't throw on the empty Supabase mock.
+vi.mock('@/lib/admin-recipients', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/admin-recipients')>('@/lib/admin-recipients')
+  return {
+    ...actual,
+    getAdminRecipients: vi.fn(async () => ['admin@school.edu']),
+  }
+})
+
 // Rate limiter is exercised end-to-end in tests/rate-limit.test.ts.
 // Mock here so submitRequest validation tests don't hit the real DB or change
 // behaviour across runs.
@@ -82,7 +93,6 @@ describe('submitRequest validation (demo mode — allowlist skipped)', () => {
     process.env.DEMO_MODE = 'true'
     process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
     process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
-    process.env.ADMIN_EMAILS = 'admin@school.edu'
     process.env.RESEND_FROM = 'noreply@school.edu'
     delete process.env.ALLOWED_EMAIL_DOMAINS
   })
@@ -165,7 +175,6 @@ describe('submitRequest validation (real mode — allowlist enforced)', () => {
     delete process.env.DEMO_MODE
     process.env.APPROVAL_HMAC_SECRET = 'test-secret-32-chars-long-padding'
     process.env.NEXT_PUBLIC_BASE_URL = 'http://localhost:3000'
-    process.env.ADMIN_EMAILS = 'admin@school.edu'
     process.env.RESEND_FROM = 'noreply@school.edu'
     process.env.ALLOWED_EMAIL_DOMAINS = 'school.edu'
   })

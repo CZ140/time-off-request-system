@@ -4,21 +4,24 @@ import { useState } from 'react'
 import type { Database } from '@/types/database'
 import RequestsTab from './RequestsTab'
 import BlackoutDatesTab from './BlackoutDatesTab'
+import RecipientsTab from './RecipientsTab'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type AdminRecipientRow = Database['public']['Tables']['admin_recipients']['Row']
 
 type TabId = 'requests' | 'blackout' | 'recipients' | 'calendar' | 'stats'
 
 interface TabSwitcherProps {
   requests: RequestRow[]
   blackoutDates: BlackoutDateRow[]
+  recipients: AdminRecipientRow[]
 }
 
 // "Soon" tabs are visible but inert — they set the visual expectation for
-// future work (Recipients management, Calendar view, Stats) without claiming
-// to ship features that don't exist yet.
-const SOON_TABS: TabId[] = ['recipients', 'calendar', 'stats']
+// future work (Calendar view, Stats) without claiming to ship features that
+// don't exist yet. Recipients used to live here; it now has a real tab.
+const SOON_TABS: TabId[] = ['calendar', 'stats']
 
 const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'requests', label: 'Requests' },
@@ -28,7 +31,7 @@ const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'stats', label: 'Stats' },
 ]
 
-export default function TabSwitcher({ requests, blackoutDates }: TabSwitcherProps) {
+export default function TabSwitcher({ requests, blackoutDates, recipients }: TabSwitcherProps) {
   const [activeTab, setActiveTab] = useState<TabId>('requests')
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length
@@ -72,6 +75,7 @@ export default function TabSwitcher({ requests, blackoutDates }: TabSwitcherProp
       <div className="px-6 py-8 sm:px-14">
         {activeTab === 'requests' && <RequestsTab requests={requests} />}
         {activeTab === 'blackout' && <BlackoutDatesTab blackoutDates={blackoutDates} />}
+        {activeTab === 'recipients' && <RecipientsTab recipients={recipients} />}
         {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
       </div>
     </div>
@@ -80,10 +84,6 @@ export default function TabSwitcher({ requests, blackoutDates }: TabSwitcherProp
 
 function ComingSoonPanel({ tab }: { tab: TabId }) {
   const copy: Record<string, { title: string; body: string }> = {
-    recipients: {
-      title: 'Recipients',
-      body: 'Manage the list of administrators who get notified when a request comes in. Currently the recipient list is set in an environment variable.',
-    },
     calendar: {
       title: 'Calendar',
       body: 'A month view of who is out when — overlaid with blackout periods. So you can see coverage at a glance.',

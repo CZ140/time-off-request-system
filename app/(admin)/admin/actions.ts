@@ -101,3 +101,79 @@ export async function deleteRequest(id: string): Promise<{ error?: string }> {
   if (error) return { error: 'Failed to delete request. Please try again.' }
   return {}
 }
+
+// --- Admin Recipients CRUD ---
+
+// Same loose email shape check used in app/(public)/actions.ts.
+// We don't require a specific domain here — the recipient list is admin-curated
+// and may include non-school emails (e.g. a personal address as a backup).
+const RECIPIENT_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export type AdminRecipientState = {
+  error?: string
+  success?: boolean
+}
+
+export async function addAdminRecipient(
+  prevState: AdminRecipientState | null,
+  formData: FormData,
+): Promise<AdminRecipientState> {
+  if (!(await adminRateLimitOk())) {
+    return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
+  }
+
+  const email = ((formData.get('email') as string) ?? '').trim().toLowerCase()
+  const labelRaw = ((formData.get('label') as string) ?? '').trim()
+  const label = labelRaw.length > 0 ? labelRaw : null
+
+  if (!email) {
+    return { error: 'Email is required.' }
+  }
+  if (!RECIPIENT_EMAIL_REGEX.test(email)) {
+    return { error: 'That doesn’t look like a valid email address.' }
+  }
+
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('admin_recipients')
+    .insert({ email, label })
+
+  if (error) {
+    // 23505 = unique_violation from Postgres. Translate to a friendly message.
+    if (error.code === '23505') {
+      return { error: 'That email is already on the recipient list.' }
+    }
+    return { error: 'Failed to add recipient. Please try again.' }
+  }
+
+  return { success: true }
+}
+
+// Removes a recipient by id. Safety rail: refuses if it would leave zero rows,
+// because an empty table means the submit flow can't notify anyone.
+export async function removeAdminRecipient(id: string): Promise<{ error?: string }> {
+  if (!(await adminRateLimitOk())) {
+    return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
+  }
+
+  const supabase = createClient()
+
+  // Count first so we can refuse before deleting. Two queries instead of one,
+  // but the table is tiny (handful of rows) and the safety property is worth it.
+  const { count, error: countErr } = await supabase
+    .from('admin_recipients')
+    .select('*', { count: 'exact', head: true })
+
+  if (countErr) {
+    return { error: 'Failed to check the recipient list. Please try again.' }
+  }
+  if ((count ?? 0) <= 1) {
+    return {
+      error: 'Add another recipient before removing this one — leaving the list empty would stop all admin notifications.',
+    }
+  }
+
+  const { error } = await supabase.from('admin_recipients').delete().eq('id', id)
+  if (error) return { error: 'Failed to remove recipient. Please try again.' }
+  return {}
+}

@@ -89,6 +89,10 @@ If a teacher mistypes their own email (`alic@school.edu` instead of `alice@schoo
 
 If an admin's email account is breached, the attacker reads the approval links and can click them as that admin. The HMAC binding does not help here — the attacker IS Alice for the duration of the breach. The expiry window limits the lifetime of any single stolen link to (by default) 7 days.
 
+### A compromised admin dashboard session
+
+The dashboard's Recipients tab lets a signed-in admin add or remove email addresses on the notification list. Any newly-added address starts receiving Approve / Deny links on the very next request — there is no second-factor confirmation or cooldown. An attacker who hijacks a dashboard session can therefore add their own email and approve their own forged submissions. Mitigation depth: the `ADMIN_PASSWORD` is the only gate; the dashboard's per-session rate-limit (100 actions / hour) slows but does not stop abuse. Rotate `ADMIN_PASSWORD` and `SESSION_SECRET` if the admin session is suspected compromised.
+
 ### A leaked `APPROVAL_HMAC_SECRET`
 
 The secret is the root of trust for all approval links. If it leaks, an attacker can mint valid tokens for arbitrary `(id, action, approver, exp)` tuples. Rotate the secret immediately if you suspect compromise; all outstanding email links will become invalid (per-token expiry up to 7 days).
@@ -168,7 +172,6 @@ Every variable below must be set in the Vercel project (or equivalent) before go
 | Variable | Notes |
 |---|---|
 | `SUPABASE_URL` | Project URL. |
-| `ADMIN_EMAILS` | Comma-separated list of admin addresses that receive notifications. |
 | `RESEND_API_KEY` | Required when `DEMO_MODE=false` (or unset). Not used when `DEMO_MODE=true`. |
 | `RESEND_FROM` | Required when `DEMO_MODE=false` (or unset). Not used when `DEMO_MODE=true`. Must be a verified Resend sending domain; unverified domains will be flagged as spam. |
 | `NEXT_PUBLIC_BASE_URL` | Production URL used in email link generation. |

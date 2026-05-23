@@ -24,7 +24,8 @@ const DEMO_ONLY = [
 const PRODUCTION_ONLY = [
   'RESEND_API_KEY',
   'RESEND_FROM',
-  'ADMIN_EMAILS',
+  // ADMIN_EMAILS removed — recipient list is now in the admin_recipients table.
+  // See lib/admin-recipients.ts and the Recipients tab on the admin dashboard.
   'ADMIN_PASSWORD',
 ] as const
 

@@ -106,6 +106,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_recipients: {
+        Row: {
+          id: string
+          email: string
+          label: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          label?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          label?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

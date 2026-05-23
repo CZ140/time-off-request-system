@@ -51,6 +51,19 @@ CREATE TABLE blackout_dates (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ── admin_recipients table ───────────────────────────────────────────────
+-- Database-backed replacement for the legacy ADMIN_EMAILS env var. See
+-- 20260523000001_admin_recipients.sql for the standalone migration and
+-- guidance on seeding.
+
+CREATE TABLE admin_recipients (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      TEXT NOT NULL UNIQUE,
+  label      TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE admin_recipients ENABLE ROW LEVEL SECURITY;
+
 -- ── Row Level Security ───────────────────────────────────────────────────
 -- Both application tables: RLS enabled with NO policies = deny-all to
 -- anon and authenticated keys. The application accesses both tables via

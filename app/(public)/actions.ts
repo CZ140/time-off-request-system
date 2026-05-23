@@ -10,6 +10,7 @@ import type { LeaveType, RequestStatus } from '@/types/database'
 import { generateApprovalToken, defaultApprovalExpiry } from '@/lib/auth/tokens'
 import { isAllowedEmail } from '@/lib/auth/allowed-email'
 import { checkAndLogRateLimit, getCallerIp } from '@/lib/rate-limit'
+import { getAdminRecipients, NoAdminRecipientsError } from '@/lib/admin-recipients'
 
 // Validates email structure: requires local-part, @, domain, dot, TLD — no whitespace.
 // Simple regex intentionally: catches obvious invalids without over-constraining exotic valid addresses.
@@ -216,9 +217,25 @@ export async function submitRequest(
       console.error(`[REL-01] Auto-denial email failed for request ${inserted.id}:`, emailErr)
     }
   } else {
+    let adminEmails: string[]
+    try {
+      // Recipient list lives in the admin_recipients table now (replaces the
+      // old ADMIN_EMAILS env var). If the table is empty, NoAdminRecipientsError
+      // is thrown and surfaced as a user-facing error instead of silently
+      // sending zero emails.
+      adminEmails = await getAdminRecipients()
+    } catch (recipientErr) {
+      console.error(`[REL-01] Failed to load admin recipients for request ${inserted.id}:`, recipientErr)
+      return {
+        message:
+          recipientErr instanceof NoAdminRecipientsError
+            ? 'We can’t send your request right now — no administrator is configured. Please contact the school office.'
+            : 'Your request was received, but we could not look up the administrator. Please contact them directly.',
+      }
+    }
+
     try {
       const base = process.env.NEXT_PUBLIC_BASE_URL ?? ''
-      const adminEmails = (process.env.ADMIN_EMAILS ?? '').split(',').map(e => e.trim()).filter(Boolean)
       // Per-admin tokens: each admin gets a token bound to their own email so
       // a leaked link can't be used by a different admin. Expiry is shared
       // across all recipients (single issue-time timestamp).
