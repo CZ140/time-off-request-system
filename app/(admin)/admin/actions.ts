@@ -4,6 +4,10 @@ import { redirect } from 'next/navigation'
 import { destroySession, getSession } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase/server'
 import { checkAndLogRateLimit } from '@/lib/rate-limit'
+import { sendEmail } from '@/lib/email/send'
+import { approvalConfirmationTemplate } from '@/lib/email/templates/approval-confirmation'
+import { denialConfirmationTemplate } from '@/lib/email/templates/denial-confirmation'
+import type { Database, LeaveType, RequestStatus } from '@/types/database'
 
 // 100 admin actions per session per hour. The session ID is generated at login
 // time (lib/auth/session.ts) and stored in the iron-session cookie. A new login
@@ -83,6 +87,93 @@ export async function deleteBlackoutDate(id: string): Promise<{ error?: string }
 }
 
 // --- Request CRUD ---
+
+// Approve or deny a pending request from the dashboard.
+//
+// Parallel path to the email-link flow (app/approve/[id]/actions.ts). Required
+// for demo mode where emails are suppressed and the link flow is therefore a
+// dead-end. Also useful in production as a faster alternative to clicking
+// through an email — the admin is already on the dashboard.
+//
+// Atomic guard via .eq('status', 'pending') prevents double-action: if two
+// admins click simultaneously (or one admin clicks both dashboard and email
+// link), only the first write succeeds.
+export type ReviewState = { error?: string; success?: boolean }
+
+type RequestRow = Database['public']['Tables']['requests']['Row']
+
+export async function reviewRequest(
+  id: string,
+  decision: 'approve' | 'deny',
+): Promise<ReviewState> {
+  if (!(await adminRateLimitOk())) {
+    return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
+  }
+
+  if (decision !== 'approve' && decision !== 'deny') {
+    return { error: 'Invalid decision.' }
+  }
+
+  const supabase = createClient()
+  const newStatus: RequestStatus = decision === 'approve' ? 'approved' : 'denied'
+
+  // Atomic update: .eq('status', 'pending') guarantees we only act on a row
+  // that hasn't already been reviewed. If it was approved/denied between the
+  // page render and this action, the update returns 0 rows and we surface an
+  // error rather than overwrite the prior decision.
+  const { data: updated, error } = await supabase
+    .from('requests')
+    .update({
+      status: newStatus,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: 'Dashboard',
+    })
+    .eq('id', id)
+    .eq('status', 'pending')
+    .select()
+    .single<RequestRow>()
+
+  if (error || !updated) {
+    return {
+      error:
+        'This request is no longer pending — it may have been reviewed via the email link, or by another admin. Refresh to see the current status.',
+    }
+  }
+
+  // Send the teacher confirmation email after the DB write is confirmed.
+  // Email failures don't roll back — the DB is the source of truth and the
+  // admin saw the action complete. Surfacing an email failure as an error
+  // would just make the admin re-click, double-emailing the teacher.
+  try {
+    if (decision === 'approve') {
+      await sendEmail({
+        to: updated.teacher_email,
+        subject: 'Your time-off request has been approved',
+        html: approvalConfirmationTemplate({
+          teacherName: updated.teacher_name,
+          leaveType: updated.leave_type as LeaveType,
+          startDate: updated.start_date,
+          endDate: updated.end_date,
+        }),
+      })
+    } else {
+      await sendEmail({
+        to: updated.teacher_email,
+        subject: 'Your time-off request has been denied',
+        html: denialConfirmationTemplate({
+          teacherName: updated.teacher_name,
+          leaveType: updated.leave_type as LeaveType,
+          startDate: updated.start_date,
+          endDate: updated.end_date,
+        }),
+      })
+    }
+  } catch (emailErr) {
+    console.error(`[admin/reviewRequest] notification email failed for ${id}:`, emailErr)
+  }
+
+  return { success: true }
+}
 
 // Hard delete of a request row. Surfaces from the admin dashboard's Requests
 // tab via the confirm-then-delete pattern (same as blackout dates).

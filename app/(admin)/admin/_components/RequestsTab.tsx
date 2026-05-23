@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Database, RequestStatus } from '@/types/database'
 import { LEAVE_TYPE_LABELS, formatDate } from '@/lib/email/utils'
-import { deleteRequest } from '../actions'
+import { deleteRequest, reviewRequest } from '../actions'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 
@@ -35,24 +35,46 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'teacher_asc', label: 'Teacher (A–Z)' },
 ]
 
+// State shape for the inline confirm flows. At most one card can be in
+// "confirming" mode at a time across all three actions.
+type Confirm =
+  | { kind: 'delete'; id: string }
+  | { kind: 'approve'; id: string }
+  | { kind: 'deny'; id: string }
+  | null
+
 export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
   const router = useRouter()
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [sortKey, setSortKey] = useState<SortKey>('submitted_desc')
-  const [confirmId, setConfirmId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [isDeleting, startDelete] = useTransition()
+  const [confirm, setConfirm] = useState<Confirm>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [isProcessing, startTransition] = useTransition()
 
   function handleDelete(id: string) {
-    startDelete(async () => {
+    startTransition(async () => {
       const result = await deleteRequest(id)
       if (result.error) {
-        setDeleteError(result.error)
-        setConfirmId(null)
+        setActionError(result.error)
+        setConfirm(null)
         return
       }
-      setDeleteError(null)
-      setConfirmId(null)
+      setActionError(null)
+      setConfirm(null)
+      router.refresh()
+    })
+  }
+
+  function handleReview(id: string, decision: 'approve' | 'deny') {
+    startTransition(async () => {
+      const result = await reviewRequest(id, decision)
+      if (result.error) {
+        setActionError(result.error)
+        setConfirm(null)
+        return
+      }
+      setActionError(null)
+      setConfirm(null)
       router.refresh()
     })
   }
@@ -140,9 +162,9 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
         })}
       </div>
 
-      {deleteError && (
+      {actionError && (
         <p className="mb-3 rounded-sm border border-oxblood/30 bg-oxblood/10 px-3 py-2 text-sm text-oxblood">
-          {deleteError}
+          {actionError}
         </p>
       )}
 
@@ -158,11 +180,13 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
             <RequestCard
               key={r.id}
               r={r}
-              confirming={confirmId === r.id}
-              isDeleting={isDeleting}
-              onAskDelete={() => setConfirmId(r.id)}
+              confirm={confirm?.id === r.id ? confirm : null}
+              isProcessing={isProcessing}
+              onAskDelete={() => setConfirm({ kind: 'delete', id: r.id })}
               onConfirmDelete={() => handleDelete(r.id)}
-              onCancelDelete={() => setConfirmId(null)}
+              onAskReview={(decision) => setConfirm({ kind: decision, id: r.id })}
+              onConfirmReview={(decision) => handleReview(r.id, decision)}
+              onCancel={() => setConfirm(null)}
             />
           ))}
         </ul>
@@ -173,14 +197,25 @@ export default function RequestsTab({ requests }: { requests: RequestRow[] }) {
 
 type RequestCardProps = {
   r: RequestRow
-  confirming: boolean
-  isDeleting: boolean
+  confirm: Confirm
+  isProcessing: boolean
   onAskDelete: () => void
   onConfirmDelete: () => void
-  onCancelDelete: () => void
+  onAskReview: (decision: 'approve' | 'deny') => void
+  onConfirmReview: (decision: 'approve' | 'deny') => void
+  onCancel: () => void
 }
 
-function RequestCard({ r, confirming, isDeleting, onAskDelete, onConfirmDelete, onCancelDelete }: RequestCardProps) {
+function RequestCard({
+  r,
+  confirm,
+  isProcessing,
+  onAskDelete,
+  onConfirmDelete,
+  onAskReview,
+  onConfirmReview,
+  onCancel,
+}: RequestCardProps) {
   const chip = STATUS_CHIP[r.status]
   const days = dayCount(r.start_date, r.end_date)
   const dateLabel =
@@ -222,7 +257,7 @@ function RequestCard({ r, confirming, isDeleting, onAskDelete, onConfirmDelete, 
         )}
       </div>
 
-      <div className="flex flex-col items-start gap-1.5 sm:items-end">
+      <div className="flex flex-col items-start gap-2 sm:items-end">
         <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide ${chip.bg} ${chip.fg}`}>
           {chip.label}
         </span>
@@ -231,20 +266,79 @@ function RequestCard({ r, confirming, isDeleting, onAskDelete, onConfirmDelete, 
           <div className="text-[11px] text-ink-3">by {r.reviewed_by}</div>
         )}
 
+        {/* Approve / Deny for pending rows. Inline confirm step mirrors the
+            email-link flow (which also has a click-through confirmation). */}
+        {r.status === 'pending' && (
+          <div className="flex items-center gap-1.5">
+            {confirm?.kind === 'approve' ? (
+              <>
+                <button
+                  onClick={() => onConfirmReview('approve')}
+                  disabled={isProcessing}
+                  className="rounded-sm bg-moss px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:bg-moss-alt disabled:opacity-40"
+                >
+                  {isProcessing ? 'Approving…' : 'Confirm approve?'}
+                </button>
+                <button
+                  onClick={onCancel}
+                  disabled={isProcessing}
+                  className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : confirm?.kind === 'deny' ? (
+              <>
+                <button
+                  onClick={() => onConfirmReview('deny')}
+                  disabled={isProcessing}
+                  className="rounded-sm bg-oxblood px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:opacity-90 disabled:opacity-40"
+                >
+                  {isProcessing ? 'Denying…' : 'Confirm deny?'}
+                </button>
+                <button
+                  onClick={onCancel}
+                  disabled={isProcessing}
+                  className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => onAskReview('approve')}
+                  className="rounded-sm bg-moss px-2.5 py-1 text-[11px] font-bold text-cream transition-colors hover:bg-moss-alt"
+                  aria-label={`Approve request from ${r.teacher_name}`}
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => onAskReview('deny')}
+                  className="rounded-sm border border-rule bg-card px-2.5 py-1 text-[11px] font-bold text-ink-2 transition-colors hover:border-oxblood hover:text-oxblood"
+                  aria-label={`Deny request from ${r.teacher_name}`}
+                >
+                  Deny
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Delete affordance: inline confirm pattern, matches the blackout tab. */}
-        <div className="mt-1.5">
-          {confirming ? (
+        <div>
+          {confirm?.kind === 'delete' ? (
             <span className="flex items-center gap-2">
               <button
                 onClick={onConfirmDelete}
-                disabled={isDeleting}
+                disabled={isProcessing}
                 className="label-eyebrow text-oxblood transition-colors hover:opacity-70 disabled:opacity-40"
               >
-                {isDeleting ? 'Deleting…' : 'Confirm?'}
+                {isProcessing ? 'Deleting…' : 'Confirm?'}
               </button>
               <button
-                onClick={onCancelDelete}
-                disabled={isDeleting}
+                onClick={onCancel}
+                disabled={isProcessing}
                 className="label-eyebrow text-ink-3 transition-colors hover:text-ink-2 disabled:opacity-40"
               >
                 Cancel
