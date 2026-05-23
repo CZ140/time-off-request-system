@@ -53,3 +53,9 @@ supabase/.temp/
 # internal planning artifacts — kept on disk for local reference, not pushed
 .planning/
 AUDIT.txt
+
+# Playwright MCP session traces — generated locally, not part of the project
+.playwright-mcp/
+
+# Claude Code design-handoff bundles — temporary, downloaded for reference only
+.design-handoff/
