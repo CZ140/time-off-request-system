@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+@theme {
+  /* Schoolhouse palette — warm cream paper, deep moss accent, considered ink.
+     Chroma matched across accents; light/dark roles named by intent, not hex. */
+  --color-cream: #F1EADC;
+  --color-cream-alt: #E9E0CB;
+  --color-card: #FBF6EA;
+  --color-ink: #1C2421;
+  --color-ink-2: #43504A;
+  --color-ink-3: #7A8580;
+  --color-rule: #D9CFB7;
+  --color-rule-soft: #E4DCC8;
+  --color-moss: #2F4A35;
+  --color-moss-alt: #3D6346;
+  --color-bark: #7A4A2A;
+  --color-oxblood: #8A2E2A;
+  --color-butter: #D9B66B;
+
+  /* Status chip backgrounds (warm-tinted, not generic). */
+  --color-chip-pending-bg: #FBEED8;
+  --color-chip-approved-bg: #DEEBE0;
+  --color-chip-denied-bg: #F2DAD8;
+  --color-chip-auto-bg: #E4DCC8;
+
+  /* Font families wired up via CSS variables set by next/font in app/layout.tsx. */
+  --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-instrument), Georgia, "Times New Roman", serif;
+}
+
+/* Body baseline: cream paper, ink text, Manrope weight 500 to match the mock's
+   slightly-bolder default. Antialiased to keep the serif crisp at display sizes. */
+@layer base {
+  html, body {
+    background: var(--color-cream);
+    color: var(--color-ink);
+  }
+  body {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Tiny-caps label used everywhere — moved to a utility so we don't repeat the
+     letter-spacing / uppercase / weight combo on every component. */
+  .label-eyebrow {
+    font-size: 0.6875rem; /* 11px */
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--color-ink-3);
+  }
+}
