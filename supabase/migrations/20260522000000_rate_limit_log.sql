@@ -19,12 +19,3 @@ CREATE INDEX rate_limit_log_key_time_idx
 -- This is defense-in-depth against future code that might wire up a client-side
 -- Supabase client, or against a leaked anon key.
 ALTER TABLE rate_limit_log ENABLE ROW LEVEL SECURITY;
-
--- Periodic cleanup: rows older than 24 hours are useless for any rate window we use
--- (max window is 1 hour). The application does NOT clean this up itself — run this
--- manually or via a Supabase scheduled job:
---
---   DELETE FROM rate_limit_log WHERE occurred_at < now() - interval '24 hours';
---
--- With ~10 teachers submitting a few times per day, the table stays small even
--- without cleanup (well under 1000 rows/day).
