@@ -30,6 +30,14 @@ export default function LoginForm({ demoPassword }: { demoPassword?: string }) {
           </div>
         )}
 
+        {/* Demo-only context: the live app uses Microsoft SSO; the demo keeps a
+            password so reviewers can explore without a Microsoft account. */}
+        <p className="mt-3 text-[12px] leading-relaxed text-ink-3">
+          In production this dashboard uses <span className="font-semibold text-ink-2">Microsoft sign-in</span>{' '}
+          (and connects Outlook so approved time off syncs to a calendar). The demo uses a password so you can
+          explore it without a Microsoft account.
+        </p>
+
         <form action={formAction} className="mt-7">
           <div>
             <label htmlFor="password" className="label-eyebrow mb-2 block">
