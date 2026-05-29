@@ -1,7 +1,8 @@
 // tests/admin-login.test.ts
-// Verifies that the admin login action checks the password against the right
-// env var depending on DEMO_MODE — DEMO_ADMIN_PASSWORD in demo, ADMIN_PASSWORD in real.
-// Critical so a demo deployment cannot accept (or expose) the production password.
+// The password login now exists ONLY in demo mode — production authenticates via
+// "Sign in with Microsoft" (gated by the admin_recipients allowlist). These
+// tests verify the demo password works in demo mode and that ALL password
+// attempts are rejected outside demo mode.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const { createSessionMock, redirectMock } = vi.hoisted(() => ({
@@ -68,30 +69,24 @@ describe('loginAdmin — demo mode', () => {
   })
 })
 
-describe('loginAdmin — real mode', () => {
+describe('loginAdmin — real mode (password login disabled)', () => {
   beforeEach(() => {
     delete process.env.DEMO_MODE
+    // Even with these set, password login must be refused outside demo mode.
     process.env.ADMIN_PASSWORD = 'real-admin-password-32chars-ok'
     process.env.DEMO_ADMIN_PASSWORD = 'demo2026'
   })
 
-  it('accepts the production password and creates a session', async () => {
+  it('refuses any password and points to Microsoft sign-in', async () => {
     const result = await loginAdmin({}, makeFormData('real-admin-password-32chars-ok'))
-    expect(createSessionMock).toHaveBeenCalledOnce()
-    expect(redirectMock).toHaveBeenCalledWith('/admin')
-    expect(result).toBeUndefined()
-  })
-
-  it('rejects the demo password even though it is set in env', async () => {
-    // CRITICAL: a real deployment must not accept the demo password (which
-    // could leak from a demo .env, a code review screenshot, etc.).
-    const result = await loginAdmin({}, makeFormData('demo2026'))
-    expect(result?.error).toBe('Incorrect password. Please try again.')
+    expect(result?.error).toBe('Password login is disabled. Use “Sign in with Microsoft”.')
     expect(createSessionMock).not.toHaveBeenCalled()
+    expect(redirectMock).not.toHaveBeenCalled()
   })
 
-  it('rejects a wrong password', async () => {
-    const result = await loginAdmin({}, makeFormData('wrong'))
-    expect(result?.error).toBe('Incorrect password. Please try again.')
+  it('refuses the demo password too (no password path in production)', async () => {
+    const result = await loginAdmin({}, makeFormData('demo2026'))
+    expect(result?.error).toBe('Password login is disabled. Use “Sign in with Microsoft”.')
+    expect(createSessionMock).not.toHaveBeenCalled()
   })
 })

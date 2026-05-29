@@ -19,6 +19,12 @@ export interface AdminSessionData {
   // bucketed per-session rather than per-IP (which would conflate multiple
   // admins behind the same NAT). Set once at createSession; cleared on destroy.
   sessionId?: string
+  // The signed-in admin's verified email (from Microsoft). Undefined in demo
+  // mode (password login). Used to attribute reviews via reviewed_by.
+  adminEmail?: string
+  // MSAL homeAccountId of the signed-in admin. Lets the Calendar Sync tab offer
+  // "make my account the sync calendar" without re-deriving identity.
+  homeAccountId?: string
 }
 
 const sessionOptions = {
@@ -38,10 +44,12 @@ export async function getSession() {
   return getIronSession<AdminSessionData>(cookieStore, sessionOptions)
 }
 
-export async function createSession() {
+export async function createSession(identity?: { adminEmail?: string; homeAccountId?: string }) {
   const session = await getSession()
   session.isLoggedIn = true
   session.sessionId = randomUUID()
+  session.adminEmail = identity?.adminEmail
+  session.homeAccountId = identity?.homeAccountId
   await session.save()
 }
 

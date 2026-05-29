@@ -11,6 +11,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@azure/msal-node": "^5.2.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@supabase/supabase-js": "^2.99.0",
     "iron-session": "^8.0.4",
     "next": "15.5.12",

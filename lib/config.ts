@@ -26,7 +26,19 @@ const PRODUCTION_ONLY = [
   'RESEND_FROM',
   // ADMIN_EMAILS removed — recipient list is now in the admin_recipients table.
   // See lib/admin-recipients.ts and the Recipients tab on the admin dashboard.
-  'ADMIN_PASSWORD',
+  //
+  // ADMIN_PASSWORD removed — production login is now "Sign in with Microsoft"
+  // (delegated OAuth), gated by the admin_recipients allowlist. The password
+  // path survives ONLY in demo mode (DEMO_ADMIN_PASSWORD below). See
+  // app/api/auth/microsoft/* and lib/auth/admin-allowlist.ts.
+  //
+  // Microsoft OAuth + Outlook calendar sync. MS_REDIRECT_URI must exactly match
+  // the redirect URI registered on the Azure app. CALENDAR_TOKEN_ENC_KEY is a
+  // 32-byte base64 key used to encrypt the stored MSAL token cache at rest.
+  'MS_CLIENT_ID',
+  'MS_CLIENT_SECRET',
+  'MS_REDIRECT_URI',
+  'CALENDAR_TOKEN_ENC_KEY',
 ] as const
 
 const varsToCheck = isDemo

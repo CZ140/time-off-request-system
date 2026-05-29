@@ -7,17 +7,21 @@ import BlockoutDatesTab from './BlockoutDatesTab'
 import RecipientsTab from './RecipientsTab'
 import StatsTab from './StatsTab'
 import CalendarTab from './CalendarTab'
+import CalendarSyncTab from './CalendarSyncTab'
+import type { ConnectionSummary } from '@/lib/calendar/store'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
 type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 type AdminRecipientRow = Database['public']['Tables']['admin_recipients']['Row']
 
-type TabId = 'requests' | 'blockout' | 'recipients' | 'calendar' | 'stats'
+type TabId = 'requests' | 'blockout' | 'recipients' | 'calendar' | 'sync' | 'stats'
 
 interface TabSwitcherProps {
   requests: RequestRow[]
   blockoutDates: BlockoutDateRow[]
   recipients: AdminRecipientRow[]
+  calendarConnection: ConnectionSummary | null
+  isDemo: boolean
 }
 
 // All five tabs now have real implementations. The SOON_TABS list is empty —
@@ -30,10 +34,17 @@ const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'blockout', label: 'Blockouts' },
   { id: 'recipients', label: 'Recipients' },
   { id: 'calendar', label: 'Calendar' },
+  { id: 'sync', label: 'Calendar Sync' },
   { id: 'stats', label: 'Stats' },
 ]
 
-export default function TabSwitcher({ requests, blockoutDates, recipients }: TabSwitcherProps) {
+export default function TabSwitcher({
+  requests,
+  blockoutDates,
+  recipients,
+  calendarConnection,
+  isDemo,
+}: TabSwitcherProps) {
   const [activeTab, setActiveTab] = useState<TabId>('requests')
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length
@@ -80,6 +91,9 @@ export default function TabSwitcher({ requests, blockoutDates, recipients }: Tab
         {activeTab === 'recipients' && <RecipientsTab recipients={recipients} />}
         {activeTab === 'stats' && <StatsTab requests={requests} />}
         {activeTab === 'calendar' && <CalendarTab requests={requests} blockoutDates={blockoutDates} />}
+        {activeTab === 'sync' && (
+          <CalendarSyncTab connection={calendarConnection} isDemo={isDemo} />
+        )}
         {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
       </div>
     </div>

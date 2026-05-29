@@ -27,6 +27,8 @@ function row(overrides: Partial<RequestRow> = {}): RequestRow {
     submitted_at: new Date(NOW_MS - 86_400_000).toISOString(), // 1 day ago
     reviewed_at: null,
     reviewed_by: null,
+    calendar_event_id: null,
+    calendar_provider: null,
   }
   return { ...base, ...overrides }
 }

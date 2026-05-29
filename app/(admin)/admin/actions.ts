@@ -7,6 +7,14 @@ import { checkAndLogRateLimit } from '@/lib/rate-limit'
 import { sendEmail } from '@/lib/email/send'
 import { approvalConfirmationTemplate } from '@/lib/email/templates/approval-confirmation'
 import { denialConfirmationTemplate } from '@/lib/email/templates/denial-confirmation'
+import { syncApprovalToCalendar, removeApprovalFromCalendar } from '@/lib/calendar/sync'
+import {
+  getConnectionSummary,
+  saveSelectedCalendar,
+  deleteConnection,
+  type ConnectionSummary,
+} from '@/lib/calendar/store'
+import { listCalendars, type CalendarSummary } from '@/lib/calendar/events'
 import type { Database, LeaveType, RequestStatus } from '@/types/database'
 
 // 100 admin actions per session per hour. The session ID is generated at login
@@ -34,6 +42,61 @@ async function adminRateLimitOk(): Promise<boolean> {
 export async function logoutAdmin() {
   await destroySession()
   redirect('/admin/login')  // outside try/catch — NEXT_REDIRECT must not be swallowed
+}
+
+// --- Calendar Sync ---
+// These touch stored credentials, so they double-check the session is logged in
+// (server actions aren't gated by the (protected) layout the way pages are).
+
+async function requireAdmin(): Promise<boolean> {
+  const session = await getSession()
+  return Boolean(session.isLoggedIn)
+}
+
+export type SyncCalendarsState = { calendars?: CalendarSummary[]; error?: string }
+
+// List the connected account's calendars for the picker.
+export async function getSyncCalendars(): Promise<SyncCalendarsState> {
+  if (!(await requireAdmin())) return { error: 'Not authorized.' }
+  try {
+    return { calendars: await listCalendars() }
+  } catch (e) {
+    console.error('[admin/getSyncCalendars] failed:', e)
+    return { error: 'Couldn’t load calendars. The connection may need to be re-established.' }
+  }
+}
+
+// Choose which calendar approved time off syncs to.
+export async function setSyncCalendar(
+  calendarId: string,
+  calendarName: string,
+): Promise<{ error?: string }> {
+  if (!(await requireAdmin())) return { error: 'Not authorized.' }
+  if (!calendarId) return { error: 'No calendar selected.' }
+  try {
+    await saveSelectedCalendar({ calendarId, calendarName })
+    return {}
+  } catch (e) {
+    console.error('[admin/setSyncCalendar] failed:', e)
+    return { error: 'Failed to save the calendar selection. Please try again.' }
+  }
+}
+
+// Remove the stored connection entirely (credential + sync target).
+export async function disconnectCalendar(): Promise<{ error?: string }> {
+  if (!(await requireAdmin())) return { error: 'Not authorized.' }
+  try {
+    await deleteConnection()
+    return {}
+  } catch (e) {
+    console.error('[admin/disconnectCalendar] failed:', e)
+    return { error: 'Failed to disconnect. Please try again.' }
+  }
+}
+
+// Read-only helper for the dashboard page to render current sync status.
+export async function getCalendarConnection(): Promise<ConnectionSummary | null> {
+  return getConnectionSummary()
 }
 
 // --- Blockout Date CRUD ---
@@ -117,6 +180,11 @@ export async function reviewRequest(
   const supabase = createClient()
   const newStatus: RequestStatus = decision === 'approve' ? 'approved' : 'denied'
 
+  // Attribute the review to the signed-in admin's email (Microsoft login). In
+  // demo mode there's no adminEmail, so fall back to the generic label.
+  const session = await getSession()
+  const reviewedBy = session.adminEmail ?? 'Dashboard'
+
   // Atomic update: .eq('status', 'pending') guarantees we only act on a row
   // that hasn't already been reviewed. If it was approved/denied between the
   // page render and this action, the update returns 0 rows and we surface an
@@ -126,7 +194,7 @@ export async function reviewRequest(
     .update({
       status: newStatus,
       reviewed_at: new Date().toISOString(),
-      reviewed_by: 'Dashboard',
+      reviewed_by: reviewedBy,
     })
     .eq('id', id)
     .eq('status', 'pending')
@@ -172,6 +240,18 @@ export async function reviewRequest(
     console.error(`[admin/reviewRequest] notification email failed for ${id}:`, emailErr)
   }
 
+  // Push the approved time off to the connected Outlook calendar. Non-fatal:
+  // a calendar failure must not reverse the approval or make the admin re-click
+  // (same contract as the email side-effect above). No-op if no calendar is
+  // connected, or on deny.
+  if (decision === 'approve') {
+    try {
+      await syncApprovalToCalendar(updated)
+    } catch (calErr) {
+      console.error(`[admin/reviewRequest] calendar sync failed for ${id}:`, calErr)
+    }
+  }
+
   return { success: true }
 }
 
@@ -188,6 +268,23 @@ export async function deleteRequest(id: string): Promise<{ error?: string }> {
   }
 
   const supabase = createClient()
+
+  // If this request created a calendar event, remove it first. Best-effort:
+  // a calendar failure shouldn't block deleting the row (the row is the source
+  // of truth). The delete itself is idempotent (swallows 404/410).
+  const { data: existing } = await supabase
+    .from('requests')
+    .select('*')
+    .eq('id', id)
+    .single<RequestRow>()
+  if (existing?.calendar_event_id) {
+    try {
+      await removeApprovalFromCalendar(existing)
+    } catch (calErr) {
+      console.error(`[admin/deleteRequest] calendar event removal failed for ${id}:`, calErr)
+    }
+  }
+
   const { error } = await supabase.from('requests').delete().eq('id', id)
   if (error) return { error: 'Failed to delete request. Please try again.' }
   return {}
