@@ -1,7 +1,7 @@
 -- Migration: enable_rls_existing_tables
 -- Created: 2026-05-22
 --
--- Enables Row Level Security on the requests and blackout_dates tables to match
+-- Enables Row Level Security on the requests and blockout_dates tables to match
 -- the posture established for rate_limit_log in the immediately preceding migration.
 -- These tables were originally created (20260310000000_initial_schema.sql) without
 -- RLS; verified via pg_tables.rowsecurity that the remote database also has it off.
@@ -21,4 +21,4 @@
 -- migration was amended.
 
 ALTER TABLE requests        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE blackout_dates  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blockout_dates  ENABLE ROW LEVEL SECURITY;

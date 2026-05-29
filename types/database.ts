@@ -28,7 +28,7 @@ export type Database = {
           start_date: string
           end_date: string
           reason: string | null
-          is_blackout: boolean
+          is_blockout: boolean
           status: RequestStatus
           submitted_at: string
           reviewed_at: string | null
@@ -42,7 +42,7 @@ export type Database = {
           start_date: string
           end_date: string
           reason?: string | null
-          is_blackout: boolean
+          is_blockout: boolean
           status?: RequestStatus
           submitted_at?: string
           reviewed_at?: string | null
@@ -56,7 +56,7 @@ export type Database = {
           start_date?: string
           end_date?: string
           reason?: string | null
-          is_blackout?: boolean
+          is_blockout?: boolean
           status?: RequestStatus
           submitted_at?: string
           reviewed_at?: string | null
@@ -64,7 +64,7 @@ export type Database = {
         }
         Relationships: []
       }
-      blackout_dates: {
+      blockout_dates: {
         Row: {
           id: string
           label: string

@@ -100,7 +100,7 @@ export default function StatsTab({ requests }: { requests: RequestRow[] }) {
             <MetricCard
               label="Auto-denied"
               value={stats.autoDenialRate === null ? '—' : `${Math.round(stats.autoDenialRate * 100)}%`}
-              sub={`${stats.statusCounts.auto_denied} blocked by blackouts`}
+              sub={`${stats.statusCounts.auto_denied} blocked by blockouts`}
               tone={stats.autoDenialRate !== null && stats.autoDenialRate > 0.1 ? 'warn' : 'default'}
             />
             <MetricCard

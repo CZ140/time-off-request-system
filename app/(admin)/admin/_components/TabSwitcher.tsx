@@ -3,20 +3,20 @@
 import { useState } from 'react'
 import type { Database } from '@/types/database'
 import RequestsTab from './RequestsTab'
-import BlackoutDatesTab from './BlackoutDatesTab'
+import BlockoutDatesTab from './BlockoutDatesTab'
 import RecipientsTab from './RecipientsTab'
 import StatsTab from './StatsTab'
 import CalendarTab from './CalendarTab'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 type AdminRecipientRow = Database['public']['Tables']['admin_recipients']['Row']
 
-type TabId = 'requests' | 'blackout' | 'recipients' | 'calendar' | 'stats'
+type TabId = 'requests' | 'blockout' | 'recipients' | 'calendar' | 'stats'
 
 interface TabSwitcherProps {
   requests: RequestRow[]
-  blackoutDates: BlackoutDateRow[]
+  blockoutDates: BlockoutDateRow[]
   recipients: AdminRecipientRow[]
 }
 
@@ -27,13 +27,13 @@ const SOON_TABS: TabId[] = []
 
 const TAB_DEFS: { id: TabId; label: string }[] = [
   { id: 'requests', label: 'Requests' },
-  { id: 'blackout', label: 'Blackouts' },
+  { id: 'blockout', label: 'Blockouts' },
   { id: 'recipients', label: 'Recipients' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'stats', label: 'Stats' },
 ]
 
-export default function TabSwitcher({ requests, blackoutDates, recipients }: TabSwitcherProps) {
+export default function TabSwitcher({ requests, blockoutDates, recipients }: TabSwitcherProps) {
   const [activeTab, setActiveTab] = useState<TabId>('requests')
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length
@@ -76,10 +76,10 @@ export default function TabSwitcher({ requests, blackoutDates, recipients }: Tab
 
       <div className="px-6 py-8 sm:px-14">
         {activeTab === 'requests' && <RequestsTab requests={requests} />}
-        {activeTab === 'blackout' && <BlackoutDatesTab blackoutDates={blackoutDates} />}
+        {activeTab === 'blockout' && <BlockoutDatesTab blockoutDates={blockoutDates} />}
         {activeTab === 'recipients' && <RecipientsTab recipients={recipients} />}
         {activeTab === 'stats' && <StatsTab requests={requests} />}
-        {activeTab === 'calendar' && <CalendarTab requests={requests} blackoutDates={blackoutDates} />}
+        {activeTab === 'calendar' && <CalendarTab requests={requests} blockoutDates={blockoutDates} />}
         {SOON_TABS.includes(activeTab) && <ComingSoonPanel tab={activeTab} />}
       </div>
     </div>
@@ -90,7 +90,7 @@ function ComingSoonPanel({ tab }: { tab: TabId }) {
   const copy: Record<string, { title: string; body: string }> = {
     calendar: {
       title: 'Calendar',
-      body: 'A month view of who is out when — overlaid with blackout periods. So you can see coverage at a glance.',
+      body: 'A month view of who is out when — overlaid with blockout periods. So you can see coverage at a glance.',
     },
     stats: {
       title: 'Stats',

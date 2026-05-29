@@ -36,17 +36,17 @@ export async function logoutAdmin() {
   redirect('/admin/login')  // outside try/catch — NEXT_REDIRECT must not be swallowed
 }
 
-// --- Blackout Date CRUD ---
+// --- Blockout Date CRUD ---
 
-export type BlackoutDateState = {
+export type BlockoutDateState = {
   error?: string
   success?: boolean
 }
 
-export async function addBlackoutDate(
-  prevState: BlackoutDateState | null,
+export async function addBlockoutDate(
+  prevState: BlockoutDateState | null,
   formData: FormData
-): Promise<BlackoutDateState> {
+): Promise<BlockoutDateState> {
   if (!(await adminRateLimitOk())) {
     return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
   }
@@ -65,24 +65,24 @@ export async function addBlackoutDate(
 
   const supabase = createClient()
   const { error } = await supabase
-    .from('blackout_dates')
+    .from('blockout_dates')
     .insert({ label, start_date, end_date })
 
   if (error) {
-    return { error: 'Failed to add blackout date. Please try again.' }
+    return { error: 'Failed to add blockout date. Please try again.' }
   }
 
   return { success: true }
 }
 
-export async function deleteBlackoutDate(id: string): Promise<{ error?: string }> {
+export async function deleteBlockoutDate(id: string): Promise<{ error?: string }> {
   if (!(await adminRateLimitOk())) {
     return { error: 'Too many admin actions in the last hour. Slow down and try again shortly.' }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from('blackout_dates').delete().eq('id', id)
-  if (error) return { error: 'Failed to delete blackout date. Please try again.' }
+  const { error } = await supabase.from('blockout_dates').delete().eq('id', id)
+  if (error) return { error: 'Failed to delete blockout date. Please try again.' }
   return {}
 }
 
@@ -176,7 +176,7 @@ export async function reviewRequest(
 }
 
 // Hard delete of a request row. Surfaces from the admin dashboard's Requests
-// tab via the confirm-then-delete pattern (same as blackout dates).
+// tab via the confirm-then-delete pattern (same as blockout dates).
 //
 // No status restriction: an admin can delete any row including 'approved'.
 // Note that deleting a row does NOT unsend any approval/denial email already

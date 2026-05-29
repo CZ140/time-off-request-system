@@ -11,7 +11,7 @@ import {
 import type { Database, LeaveType, RequestStatus } from '@/types/database'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 
 function r(overrides: Partial<RequestRow>): RequestRow {
   return {
@@ -22,7 +22,7 @@ function r(overrides: Partial<RequestRow>): RequestRow {
     start_date: '2026-05-01',
     end_date: '2026-05-01',
     reason: null,
-    is_blackout: false,
+    is_blockout: false,
     status: 'approved' as RequestStatus,
     submitted_at: '2026-04-01T00:00:00Z',
     reviewed_at: null,
@@ -31,7 +31,7 @@ function r(overrides: Partial<RequestRow>): RequestRow {
   }
 }
 
-function b(overrides: Partial<BlackoutDateRow>): BlackoutDateRow {
+function b(overrides: Partial<BlockoutDateRow>): BlockoutDateRow {
   return {
     id: 'b',
     label: 'Range',
@@ -126,10 +126,10 @@ describe('indexByDay', () => {
     expect(idx.get('2026-05-01')?.requests).toHaveLength(2)
   })
 
-  it('indexes blackout date ranges the same way', () => {
+  it('indexes blockout date ranges the same way', () => {
     const idx = indexByDay([], [b({ start_date: '2026-05-20', end_date: '2026-05-22' })])
-    expect(idx.get('2026-05-20')?.blackouts).toHaveLength(1)
-    expect(idx.get('2026-05-22')?.blackouts).toHaveLength(1)
+    expect(idx.get('2026-05-20')?.blockouts).toHaveLength(1)
+    expect(idx.get('2026-05-22')?.blockouts).toHaveLength(1)
     expect(idx.get('2026-05-23')).toBeUndefined()
   })
 

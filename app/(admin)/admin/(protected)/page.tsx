@@ -5,24 +5,24 @@ import { logoutAdmin } from '../actions'
 import { Wordmark } from '@/app/_components/Wordmark'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 type AdminRecipientRow = Database['public']['Tables']['admin_recipients']['Row']
 
 export default async function AdminDashboardPage() {
   const supabase = createClient()
   let requests: RequestRow[] = []
-  let blackoutDates: BlackoutDateRow[] = []
+  let blockoutDates: BlockoutDateRow[] = []
   let recipients: AdminRecipientRow[] = []
   let fetchError = false
 
   try {
     const [
       { data: requestsRaw, error: reqErr },
-      { data: blackoutDatesRaw, error: bdErr },
+      { data: blockoutDatesRaw, error: bdErr },
       { data: recipientsRaw, error: recErr },
     ] = await Promise.all([
       supabase.from('requests').select('*').order('submitted_at', { ascending: false }),
-      supabase.from('blackout_dates').select('*').order('start_date', { ascending: true }),
+      supabase.from('blockout_dates').select('*').order('start_date', { ascending: true }),
       supabase.from('admin_recipients').select('*').order('created_at', { ascending: true }),
     ])
     if (reqErr || bdErr || recErr) {
@@ -33,7 +33,7 @@ export default async function AdminDashboardPage() {
       throw new Error('db')
     }
     requests = (requestsRaw ?? []) as RequestRow[]
-    blackoutDates = (blackoutDatesRaw ?? []) as BlackoutDateRow[]
+    blockoutDates = (blockoutDatesRaw ?? []) as BlockoutDateRow[]
     recipients = (recipientsRaw ?? []) as AdminRecipientRow[]
   } catch (e) {
     console.error('[admin/dashboard] caught', e)
@@ -63,7 +63,7 @@ export default async function AdminDashboardPage() {
             Unable to load data. Please refresh.
           </div>
         )}
-        <TabSwitcher requests={requests} blackoutDates={blackoutDates} recipients={recipients} />
+        <TabSwitcher requests={requests} blockoutDates={blockoutDates} recipients={recipients} />
       </main>
     </div>
   )

@@ -22,7 +22,7 @@ function row(overrides: Partial<RequestRow> = {}): RequestRow {
     start_date: '2026-05-15',
     end_date: '2026-05-15',
     reason: null,
-    is_blackout: false,
+    is_blockout: false,
     status: 'pending' as RequestStatus,
     submitted_at: new Date(NOW_MS - 86_400_000).toISOString(), // 1 day ago
     reviewed_at: null,

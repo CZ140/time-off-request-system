@@ -245,9 +245,9 @@ function RequestCard({
             <span className="hidden h-3 w-px bg-rule sm:inline" />
             <span className="text-[14px] font-bold">{dateLabel}</span>
             <span className="text-[12px] text-ink-3">· {days}d</span>
-            {r.is_blackout && (
+            {r.is_blockout && (
               <span className="rounded-sm border border-bark/40 bg-butter/30 px-2 py-px text-[10px] font-bold uppercase tracking-wider text-bark">
-                Blackout
+                Blockout
               </span>
             )}
           </div>

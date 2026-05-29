@@ -4,7 +4,7 @@
 import type { Database } from '@/types/database'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 
 // A single cell on the calendar grid.
 export type GridCell = {
@@ -45,7 +45,7 @@ export function monthGrid(year: number, month: number, today: Date = new Date())
 }
 
 // Local-date ISO key (YYYY-MM-DD), independent of timezone offsets. Used as
-// the map key when grouping requests/blackouts per cell.
+// the map key when grouping requests/blockouts per cell.
 export function isoLocal(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -53,7 +53,7 @@ export function isoLocal(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-// Build a date-keyed index of which requests and blackouts overlap each day.
+// Build a date-keyed index of which requests and blockouts overlap each day.
 // Inclusive overlap on both ends — a request from 2026-05-10 → 2026-05-12
 // covers all three of those days.
 //
@@ -62,18 +62,18 @@ export function isoLocal(d: Date): string {
 // to happen, so they would only confuse coverage planning.
 export type DayBucket = {
   requests: RequestRow[]
-  blackouts: BlackoutDateRow[]
+  blockouts: BlockoutDateRow[]
 }
 
 export function indexByDay(
   requests: RequestRow[],
-  blackouts: BlackoutDateRow[],
+  blockouts: BlockoutDateRow[],
 ): Map<string, DayBucket> {
   const map = new Map<string, DayBucket>()
   const bucketFor = (iso: string): DayBucket => {
     let b = map.get(iso)
     if (!b) {
-      b = { requests: [], blackouts: [] }
+      b = { requests: [], blockouts: [] }
       map.set(iso, b)
     }
     return b
@@ -85,9 +85,9 @@ export function indexByDay(
       bucketFor(iso).requests.push(r)
     }
   }
-  for (const b of blackouts) {
+  for (const b of blockouts) {
     for (const iso of datesInRange(b.start_date, b.end_date)) {
-      bucketFor(iso).blackouts.push(b)
+      bucketFor(iso).blockouts.push(b)
     }
   }
   return map

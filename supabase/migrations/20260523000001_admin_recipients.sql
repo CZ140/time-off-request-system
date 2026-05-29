@@ -5,7 +5,7 @@
 -- the admin UI (app/(admin)/admin/_components/RecipientsTab.tsx).
 --
 -- The application reads this table via SUPABASE_SERVICE_ROLE_KEY which bypasses
--- RLS — same pattern as requests and blackout_dates. RLS is enabled with no
+-- RLS — same pattern as requests and blockout_dates. RLS is enabled with no
 -- policies as defense-in-depth against any future client-side Supabase usage.
 --
 -- ── SEED: not included in this migration on purpose ──

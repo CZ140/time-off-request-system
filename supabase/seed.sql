@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS requests (
   start_date      DATE NOT NULL,
   end_date        DATE NOT NULL,
   reason          TEXT,
-  is_blackout     BOOLEAN NOT NULL DEFAULT false,
+  is_blockout     BOOLEAN NOT NULL DEFAULT false,
   status          TEXT NOT NULL DEFAULT 'pending',
   submitted_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   reviewed_at     TIMESTAMPTZ,
   reviewed_by     TEXT
 );
 
-CREATE TABLE IF NOT EXISTS blackout_dates (
+CREATE TABLE IF NOT EXISTS blockout_dates (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   label       TEXT NOT NULL,
   start_date  DATE NOT NULL,
@@ -41,15 +41,15 @@ DELETE FROM requests WHERE id IN (
   'a1000000-0000-0000-0000-000000000008'
 );
 
-DELETE FROM blackout_dates WHERE id IN (
+DELETE FROM blockout_dates WHERE id IN (
   'b1000000-0000-0000-0000-000000000001',
   'b1000000-0000-0000-0000-000000000002',
   'b1000000-0000-0000-0000-000000000003'
 );
 
--- ── Blackout dates ───────────────────────────────────────────────────────
+-- ── Blockout dates ───────────────────────────────────────────────────────
 
-INSERT INTO blackout_dates (id, label, start_date, end_date, created_at) VALUES
+INSERT INTO blockout_dates (id, label, start_date, end_date, created_at) VALUES
   ('b1000000-0000-0000-0000-000000000001', 'State Testing Week',   '2026-04-20', '2026-04-24', now() - interval '60 days'),
   ('b1000000-0000-0000-0000-000000000002', 'Spring Break',         '2026-03-23', '2026-03-27', now() - interval '90 days'),
   ('b1000000-0000-0000-0000-000000000003', 'Professional Dev Day', '2026-05-27', '2026-05-27', now() - interval '30 days');
@@ -58,7 +58,7 @@ INSERT INTO blackout_dates (id, label, start_date, end_date, created_at) VALUES
 -- Mix of statuses, leave types, and submitted dates to make the dashboard
 -- look like a system that has been in real use.
 
-INSERT INTO requests (id, teacher_name, teacher_email, leave_type, start_date, end_date, reason, is_blackout, status, submitted_at, reviewed_at, reviewed_by) VALUES
+INSERT INTO requests (id, teacher_name, teacher_email, leave_type, start_date, end_date, reason, is_blockout, status, submitted_at, reviewed_at, reviewed_by) VALUES
 
   -- Pending — needs review (shows up prominently for demo)
   ('a1000000-0000-0000-0000-000000000001',
@@ -108,7 +108,7 @@ INSERT INTO requests (id, teacher_name, teacher_email, leave_type, start_date, e
    now() - interval '50 days',
    now() - interval '49 days', 'principal@school.edu'),
 
-  -- Auto-denied (blackout period)
+  -- Auto-denied (blockout period)
   ('a1000000-0000-0000-0000-000000000007',
    'David Thompson', 'dthompson@school.edu', 'vacation',
    '2026-04-21', '2026-04-23',

@@ -1,5 +1,5 @@
 // lib/email/templates/auto-denial.ts
-// HTML email template for blackout-period auto-denial.
+// HTML email template for blockout-period auto-denial.
 // Pure function — no server-side I/O. No 'server-only' import needed.
 import type { LeaveType } from '@/types/database'
 import { formatDate, LEAVE_TYPE_LABELS } from '@/lib/email/utils'
@@ -33,20 +33,20 @@ export function autoDenialTemplate({
 
   const body = `
     ${paragraph(`Hi ${safeName} —`)}
-    ${paragraph(`Thanks for submitting your request. Unfortunately the dates you picked fall on a school-wide blackout period, so the request has been automatically declined.`)}
+    ${paragraph(`Thanks for submitting your request. Unfortunately the dates you picked fall on a school-wide blockout period, so the request has been automatically declined.`)}
     ${detailsTable([
       ['Leave type', leaveLabel],
       ['Dates', dateRange],
     ])}
-    ${paragraph(`Blackout periods (testing weeks, finals, graduation, opening PD) are set school-wide and can't be overridden for individual requests. If you'd like to plan around them, the admin office can share the current calendar.`)}
+    ${paragraph(`Blockout periods (testing weeks, finals, graduation, opening PD) are set school-wide and can't be overridden for individual requests. If you'd like to plan around them, the admin office can share the current calendar.`)}
     ${signOff()}
   `
 
   return emailShell({
-    title: 'Time-Off Request — Blackout Period',
+    title: 'Time-Off Request — Blockout Period',
     eyebrow: 'Request not approved',
     eyebrowTone: 'bark',
-    headline: `These dates fall on a<br /><em style="font-style:italic;">blackout period</em>.`,
+    headline: `These dates fall on a<br /><em style="font-style:italic;">blockout period</em>.`,
     body,
   })
 }

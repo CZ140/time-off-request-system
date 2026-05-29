@@ -73,7 +73,7 @@ function makeFormData(overrides: Record<string, string | null> = {}) {
     start_date: '2099-06-01',
     end_date: '2099-06-03',
     leave_type: 'sick',
-    is_blackout: 'false',
+    is_blockout: 'false',
     reason: '',
   }
   const data = { ...defaults, ...overrides }
@@ -139,9 +139,9 @@ describe('submitRequest validation (demo mode — allowlist skipped)', () => {
     expect(result.errors?.leave_type?.[0]).toBe('Please select a leave type.')
   })
 
-  it('returns is_blackout error when blackout radio is not selected', async () => {
-    const result = await submitRequest(INITIAL_STATE, makeFormData({ is_blackout: null }))
-    expect(result.errors?.is_blackout?.[0]).toMatch(/blackout period/)
+  it('returns is_blockout error when blockout radio is not selected', async () => {
+    const result = await submitRequest(INITIAL_STATE, makeFormData({ is_blockout: null }))
+    expect(result.errors?.is_blockout?.[0]).toMatch(/blockout period/)
   })
 
   it('restores submitted values on validation failure', async () => {

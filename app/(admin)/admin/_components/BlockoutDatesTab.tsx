@@ -3,12 +3,12 @@
 import { useActionState, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
-import { addBlackoutDate, deleteBlackoutDate, type BlackoutDateState } from '../actions'
+import { addBlockoutDate, deleteBlockoutDate, type BlockoutDateState } from '../actions'
 import { formatDate } from '@/lib/email/utils'
 
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 
-export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: BlackoutDateRow[] }) {
+export default function BlockoutDatesTab({ blockoutDates }: { blockoutDates: BlockoutDateRow[] }) {
   const router = useRouter()
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -17,8 +17,8 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
   const [addOpen, setAddOpen] = useState(false)
 
   const [addState, addAction, addPending] = useActionState(
-    async (prev: BlackoutDateState | null, formData: FormData) => {
-      const result = await addBlackoutDate(prev, formData)
+    async (prev: BlockoutDateState | null, formData: FormData) => {
+      const result = await addBlockoutDate(prev, formData)
       if (result?.success) {
         setFormKey((k) => k + 1)
         setAddOpen(false)
@@ -31,7 +31,7 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
 
   function handleDelete(id: string) {
     startTransition(async () => {
-      const result = await deleteBlackoutDate(id)
+      const result = await deleteBlockoutDate(id)
       if (result.error) {
         setDeleteError(result.error)
         setConfirmId(null)
@@ -74,14 +74,14 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
           action={addAction}
           className="mb-6 rounded-md border border-dashed border-rule bg-card p-5"
         >
-          <div className="label-eyebrow mb-3 text-moss">● New blackout range</div>
+          <div className="label-eyebrow mb-3 text-moss">● New blockout range</div>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <div>
-              <label htmlFor="blackout-label" className="label-eyebrow mb-1.5 block">
+              <label htmlFor="blockout-label" className="label-eyebrow mb-1.5 block">
                 Label
               </label>
               <input
-                id="blackout-label"
+                id="blockout-label"
                 name="label"
                 type="text"
                 placeholder="e.g. Spring testing week"
@@ -90,11 +90,11 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
               />
             </div>
             <div>
-              <label htmlFor="blackout-start" className="label-eyebrow mb-1.5 block">
+              <label htmlFor="blockout-start" className="label-eyebrow mb-1.5 block">
                 Start
               </label>
               <input
-                id="blackout-start"
+                id="blockout-start"
                 name="start_date"
                 type="date"
                 required
@@ -102,11 +102,11 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
               />
             </div>
             <div>
-              <label htmlFor="blackout-end" className="label-eyebrow mb-1.5 block">
+              <label htmlFor="blockout-end" className="label-eyebrow mb-1.5 block">
                 End
               </label>
               <input
-                id="blackout-end"
+                id="blockout-end"
                 name="end_date"
                 type="date"
                 required
@@ -142,7 +142,7 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
         </p>
       )}
 
-      {blackoutDates.length === 0 ? (
+      {blockoutDates.length === 0 ? (
         <div className="rounded-md border border-dashed border-rule bg-card p-10 text-center text-ink-3">
           <div className="label-eyebrow mb-1">No ranges yet</div>
           <p className="text-[15px] text-ink-2">
@@ -151,7 +151,7 @@ export default function BlackoutDatesTab({ blackoutDates }: { blackoutDates: Bla
         </div>
       ) : (
         <ul className="grid gap-3 lg:grid-cols-2">
-          {blackoutDates.map((row) => {
+          {blockoutDates.map((row) => {
             const sameDay = row.start_date === row.end_date
             const year = row.start_date.slice(0, 4)
             return (

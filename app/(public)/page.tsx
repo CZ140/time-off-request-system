@@ -41,7 +41,7 @@ const LEAVE_TYPES: { value: string; label: string }[] = [
 
 export default function TeacherFormPage() {
   const [state, formAction, pending] = useActionState(submitRequest, initialState)
-  const [isBlackout, setIsBlackout] = useState<string | null>(null)
+  const [isBlockout, setIsBlockout] = useState<string | null>(null)
   const [startDate, setStartDate] = useState<string>(state.values?.start_date ?? '')
   const [emailHint, setEmailHint] = useState<string | null>(null)
   const [leaveType, setLeaveType] = useState<string>(state.values?.leave_type ?? '')
@@ -189,26 +189,26 @@ export default function TeacherFormPage() {
               </fieldset>
             </Section>
 
-            {/* Section 4 — Blackout question */}
+            {/* Section 4 — Blockout question */}
             <Section
               num="04"
-              title="Is this during a blackout period?"
+              title="Is this during a blockout period?"
               sub="Testing weeks, finals, graduation."
             >
               <fieldset>
-                <legend className="sr-only">Blackout period</legend>
-                <div className="flex flex-wrap gap-2.5" aria-describedby={state.errors?.is_blackout ? 'is_blackout-error' : undefined}>
-                  <BlackoutToggle name="is_blackout" value="false" label="No, dates are clear" current={isBlackout} onChange={setIsBlackout} />
-                  <BlackoutToggle name="is_blackout" value="true" label="Yes, dates overlap" current={isBlackout} onChange={setIsBlackout} />
+                <legend className="sr-only">Blockout period</legend>
+                <div className="flex flex-wrap gap-2.5" aria-describedby={state.errors?.is_blockout ? 'is_blockout-error' : undefined}>
+                  <BlockoutToggle name="is_blockout" value="false" label="No, dates are clear" current={isBlockout} onChange={setIsBlockout} />
+                  <BlockoutToggle name="is_blockout" value="true" label="Yes, dates overlap" current={isBlockout} onChange={setIsBlockout} />
                 </div>
-                {isBlackout === 'true' && (
+                {isBlockout === 'true' && (
                   <p className="mt-3 rounded-sm border border-bark/40 bg-butter/40 px-3 py-2 text-sm text-bark">
-                    Heads up — requests on a blackout period are auto-denied. You&apos;ll get a confirmation email.
+                    Heads up — requests on a blockout period are auto-denied. You&apos;ll get a confirmation email.
                   </p>
                 )}
-                {state.errors?.is_blackout?.[0] && (
-                  <p id="is_blackout-error" className="mt-2 text-sm text-oxblood">
-                    {state.errors.is_blackout[0]}
+                {state.errors?.is_blockout?.[0] && (
+                  <p id="is_blockout-error" className="mt-2 text-sm text-oxblood">
+                    {state.errors.is_blockout[0]}
                   </p>
                 )}
               </fieldset>
@@ -275,7 +275,7 @@ export default function TeacherFormPage() {
           <div className="mt-7 rounded-sm border border-dashed border-rule p-4 text-[13px]">
             <div className="label-eyebrow mb-2 text-oxblood">A note on accuracy</div>
             <p className="text-ink-2">
-              The blackout check is enforced server-side. Even if you select &ldquo;dates are clear,&rdquo; the system will still verify against the school calendar.
+              The blockout check is enforced server-side. Even if you select &ldquo;dates are clear,&rdquo; the system will still verify against the school calendar.
             </p>
           </div>
         </aside>
@@ -360,7 +360,7 @@ function Field({
   )
 }
 
-function BlackoutToggle({
+function BlockoutToggle({
   name,
   value,
   label,

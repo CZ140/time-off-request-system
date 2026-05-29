@@ -23,7 +23,7 @@ export type FormState = {
     start_date?: string[]
     end_date?: string[]
     leave_type?: string[]
-    is_blackout?: string[]
+    is_blockout?: string[]
   }
   message?: string
   // Return submitted values so form inputs can be restored via defaultValue on validation failure.
@@ -48,10 +48,10 @@ export async function submitRequest(
   const start_date = formData.get('start_date') as string
   const end_date = formData.get('end_date') as string
   const leave_type = formData.get('leave_type') as LeaveType
-  // Note: the client-supplied is_blackout is intentionally NOT read here.
-  // The blackout determination is made server-side from the blackout_dates table
-  // (see serverBlackout below). The form field is only used to require the user
-  // to acknowledge the blackout question — the answer itself is ignored.
+  // Note: the client-supplied is_blockout is intentionally NOT read here.
+  // The blockout determination is made server-side from the blockout_dates table
+  // (see serverBlockout below). The form field is only used to require the user
+  // to acknowledge the blockout question — the answer itself is ignored.
   const reason = (formData.get('reason') as string) || null
 
   // 2. Server-side validation — collect all errors before returning
@@ -99,9 +99,9 @@ export async function submitRequest(
     errors.leave_type = ['Please select a leave type.']
   }
 
-  // is_blackout unselected: formData.get('is_blackout') === null means teacher did not pick either radio
-  if (formData.get('is_blackout') === null) {
-    errors.is_blackout = ['Please indicate whether this falls on a blackout period.']
+  // is_blockout unselected: formData.get('is_blockout') === null means teacher did not pick either radio
+  if (formData.get('is_blockout') === null) {
+    errors.is_blockout = ['Please indicate whether this falls on a blockout period.']
   }
 
   if (Object.keys(errors).length > 0) {
@@ -119,7 +119,7 @@ export async function submitRequest(
   }
 
   // Duplicate guard: query for a matching row submitted within the last 60 seconds.
-  // Covers both blackout and non-blackout submissions.
+  // Covers both blockout and non-blockout submissions.
   // redirect() here is outside try/catch — NEXT_REDIRECT propagates correctly.
   const supabase = createClient()
 
@@ -142,26 +142,26 @@ export async function submitRequest(
     return { message: 'Too many requests from your network. Please try again in an hour.' }
   }
 
-  // 3. Server-side blackout check — overrides the client-supplied is_blackout field (SEC-01).
-  // A teacher who selects "No" on the blackout question for dates in the blackout table
+  // 3. Server-side blockout check — overrides the client-supplied is_blockout field (SEC-01).
+  // A teacher who selects "No" on the blockout question for dates in the blockout table
   // is still auto-denied. The client value is never trusted for status determination.
-  const { data: blackoutRows, error: blackoutError } = await supabase
-    .from('blackout_dates')
+  const { data: blockoutRows, error: blockoutError } = await supabase
+    .from('blockout_dates')
     .select('id')
-    .lte('start_date', end_date)   // blackout row starts on or before request end date
-    .gte('end_date', start_date)   // blackout row ends on or after request start date
+    .lte('start_date', end_date)   // blockout row starts on or before request end date
+    .gte('end_date', start_date)   // blockout row ends on or after request start date
     .limit(1)                       // existence check only — one hit is enough
 
-  if (blackoutError) {
-    // Fail closed: if the blackout check fails, do not proceed.
+  if (blockoutError) {
+    // Fail closed: if the blockout check fails, do not proceed.
     // Returning an error is safer than silently using the client-supplied value.
-    return { message: 'Unable to verify blackout dates. Please try again.' }
+    return { message: 'Unable to verify blockout dates. Please try again.' }
   }
 
-  const serverBlackout = (blackoutRows?.length ?? 0) > 0
+  const serverBlockout = (blockoutRows?.length ?? 0) > 0
 
-  // Status is derived from the server-computed blackout result, not the form field.
-  const status: RequestStatus = serverBlackout ? 'auto_denied' : 'pending'
+  // Status is derived from the server-computed blockout result, not the form field.
+  const status: RequestStatus = serverBlockout ? 'auto_denied' : 'pending'
 
   const windowStart = new Date(Date.now() - 60_000).toISOString()
   const { data: duplicate } = await supabase
@@ -187,7 +187,7 @@ export async function submitRequest(
       start_date,
       end_date,
       leave_type,
-      is_blackout: serverBlackout,
+      is_blockout: serverBlockout,
       reason,
       status,
     })
@@ -200,11 +200,11 @@ export async function submitRequest(
 
   // 5. Send emails AFTER confirmed DB insert. Each email path has its own try/catch
   // so a Resend failure does not orphan the already-inserted row (REL-01).
-  if (serverBlackout) {
+  if (serverBlockout) {
     try {
       await sendEmail({
         to: teacher_email,
-        subject: 'Your time-off request — blackout period',
+        subject: 'Your time-off request — blockout period',
         html: autoDenialTemplate({
           teacherName: teacher_name,
           leaveType: leave_type,

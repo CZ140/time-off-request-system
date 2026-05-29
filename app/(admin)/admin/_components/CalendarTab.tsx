@@ -12,17 +12,17 @@ import {
 } from '@/lib/calendar-grid'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
-type BlackoutDateRow = Database['public']['Tables']['blackout_dates']['Row']
+type BlockoutDateRow = Database['public']['Tables']['blockout_dates']['Row']
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const MAX_VISIBLE_CHIPS = 3
 
 export default function CalendarTab({
   requests,
-  blackoutDates,
+  blockoutDates,
 }: {
   requests: RequestRow[]
-  blackoutDates: BlackoutDateRow[]
+  blockoutDates: BlockoutDateRow[]
 }) {
   const today = useMemo(() => new Date(), [])
   const [cursor, setCursor] = useState<{ year: number; month: number }>(() => ({
@@ -33,9 +33,9 @@ export default function CalendarTab({
 
   const grid = useMemo(() => monthGrid(cursor.year, cursor.month, today), [cursor, today])
 
-  // Build the per-day overlap index once per (requests, blackouts) change.
+  // Build the per-day overlap index once per (requests, blockouts) change.
   // Used by every cell lookup below.
-  const dayIndex = useMemo(() => indexByDay(requests, blackoutDates), [requests, blackoutDates])
+  const dayIndex = useMemo(() => indexByDay(requests, blockoutDates), [requests, blockoutDates])
 
   function step(delta: number) {
     setCursor((c) => shiftMonth(c.year, c.month, delta))
@@ -54,7 +54,7 @@ export default function CalendarTab({
             Who&apos;s out, <em className="italic">when</em>.
           </h1>
           <p className="mt-1 max-w-2xl text-[14px] text-ink-2">
-            Approved and pending requests, laid over the blackout calendar. Click a name for the full request.
+            Approved and pending requests, laid over the blockout calendar. Click a name for the full request.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ export default function CalendarTab({
               backgroundColor: 'var(--color-cream-alt)',
             }}
           />
-          Blackout
+          Blockout
         </span>
         <span className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-sm border-2 border-moss" />
@@ -120,7 +120,7 @@ export default function CalendarTab({
           {grid.flat().map((cell, idx) => {
             const bucket = dayIndex.get(cell.iso)
             const reqs = bucket?.requests ?? []
-            const isBlackout = (bucket?.blackouts.length ?? 0) > 0
+            const isBlockout = (bucket?.blockouts.length ?? 0) > 0
             const visible = reqs.slice(0, MAX_VISIBLE_CHIPS)
             const overflow = reqs.length - visible.length
             const isLastCol = (idx + 1) % 7 === 0
@@ -135,7 +135,7 @@ export default function CalendarTab({
                   cell.inMonth ? 'bg-card' : 'bg-cream-alt/50'
                 } ${cell.isToday ? 'ring-2 ring-inset ring-moss' : ''}`}
                 style={
-                  isBlackout
+                  isBlockout
                     ? {
                         backgroundImage:
                           'repeating-linear-gradient(45deg, var(--color-butter) 0 1px, transparent 1px 9px)',
@@ -151,12 +151,12 @@ export default function CalendarTab({
                   >
                     {cell.date.getDate()}
                   </span>
-                  {isBlackout && cell.inMonth && (
+                  {isBlockout && cell.inMonth && (
                     <span
                       className="label-eyebrow text-[8px] text-bark"
-                      title={(bucket?.blackouts[0]?.label ?? '') + (bucket && bucket.blackouts.length > 1 ? ` (+${bucket.blackouts.length - 1})` : '')}
+                      title={(bucket?.blockouts[0]?.label ?? '') + (bucket && bucket.blockouts.length > 1 ? ` (+${bucket.blockouts.length - 1})` : '')}
                     >
-                      blackout
+                      blockout
                     </span>
                   )}
                 </div>

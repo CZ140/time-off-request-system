@@ -9,10 +9,10 @@ A focused leave-management tool for a small school. Teachers submit requests; ad
 ## What it does
 
 - **Teachers** open the homepage, fill out a single form (name, email, dates, leave type, reason), and submit. No account, no login — by design, see [SECURITY.md](./SECURITY.md) for the trust-model rationale.
-- The server validates the dates, **looks up the request against a server-managed blackout-dates table**, and either auto-denies (if the dates overlap a blackout) or saves it as pending.
+- The server validates the dates, **looks up the request against a server-managed blockout-dates table**, and either auto-denies (if the dates overlap a blockout) or saves it as pending.
 - **Admins** get an email with two HMAC-signed links (Approve / Deny). Clicking either lands on a confirmation page; clicking Confirm performs the action atomically.
 - The teacher gets a confirmation email when the admin decides.
-- **Admin dashboard** at `/admin` (password-protected) lists every request with status, plus a tab for managing blackout dates.
+- **Admin dashboard** at `/admin` (password-protected) lists every request with status, plus a tab for managing blockout dates.
 
 ---
 

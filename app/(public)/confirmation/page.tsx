@@ -26,7 +26,7 @@ export default async function ConfirmationPage({ searchParams }: Props) {
             </Chip>
             <h1 className="mt-5 font-display text-[44px] leading-[1.04] tracking-tight text-ink sm:text-[56px]">
               These dates fall on a<br />
-              <em className="italic">blackout period</em>.
+              <em className="italic">blockout period</em>.
             </h1>
             <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-2 sm:text-[18px]">
               The school calendar blocks leave during testing weeks, finals, graduation, and a few other windows. A
