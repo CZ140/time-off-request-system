@@ -10,15 +10,18 @@ export async function loginAdmin(
   prevState: LoginState,
   formData: FormData
 ): Promise<LoginState> {
+  // Password login exists ONLY in demo mode. Production authenticates via
+  // "Sign in with Microsoft" (app/api/auth/microsoft/*), gated by the
+  // admin_recipients allowlist. Reject any password attempt outside demo.
+  if (process.env.DEMO_MODE !== 'true') {
+    return { error: 'Password login is disabled. Use “Sign in with Microsoft”.' }
+  }
+
   const password = formData.get('password') as string
 
-  // In demo mode, the expected password is DEMO_ADMIN_PASSWORD — kept distinct
-  // from the production ADMIN_PASSWORD so the demo deployment can never reveal
-  // production credentials (the login page openly displays the demo password
-  // as a hint to portfolio reviewers).
-  const expectedPassword = process.env.DEMO_MODE === 'true'
-    ? (process.env.DEMO_ADMIN_PASSWORD ?? '')
-    : (process.env.ADMIN_PASSWORD ?? '')
+  // The demo password is held in DEMO_ADMIN_PASSWORD (never the production
+  // credential). The login page openly displays it as a hint to reviewers.
+  const expectedPassword = process.env.DEMO_ADMIN_PASSWORD ?? ''
 
   // timingSafeEqual prevents timing attacks that could leak the password length
   // or characters via response-time differences. Buffers must be the same length

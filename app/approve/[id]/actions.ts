@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email/send'
 import { verifyApprovalToken } from '@/lib/auth/tokens'
 import { approvalConfirmationTemplate } from '@/lib/email/templates/approval-confirmation'
 import { denialConfirmationTemplate } from '@/lib/email/templates/denial-confirmation'
+import { syncApprovalToCalendar } from '@/lib/calendar/sync'
 import { checkAndLogRateLimit } from '@/lib/rate-limit'
 import type { Database, LeaveType } from '@/types/database'
 
@@ -116,6 +117,16 @@ export async function confirmApproval(formData: FormData) {
   } catch (emailErr) {
     console.error(`[approval] Confirmation email failed for request ${id}:`, emailErr)
     // DB write succeeded — still redirect to /reviewed so admin sees the outcome.
+  }
+
+  // Sync approved time off to the connected Outlook calendar. Non-fatal and a
+  // no-op when nothing is connected (same contract as the email above).
+  if (action === 'approve') {
+    try {
+      await syncApprovalToCalendar(updated)
+    } catch (calErr) {
+      console.error(`[approval] calendar sync failed for request ${id}:`, calErr)
+    }
   }
 
   const p = new URLSearchParams({

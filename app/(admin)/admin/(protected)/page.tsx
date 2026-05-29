@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import TabSwitcher from '../_components/TabSwitcher'
 import { logoutAdmin } from '../actions'
+import { getConnectionSummary, type ConnectionSummary } from '@/lib/calendar/store'
 import { Wordmark } from '@/app/_components/Wordmark'
 
 type RequestRow = Database['public']['Tables']['requests']['Row']
@@ -13,7 +14,9 @@ export default async function AdminDashboardPage() {
   let requests: RequestRow[] = []
   let blockoutDates: BlockoutDateRow[] = []
   let recipients: AdminRecipientRow[] = []
+  let calendarConnection: ConnectionSummary | null = null
   let fetchError = false
+  const isDemo = process.env.DEMO_MODE === 'true'
 
   try {
     const [
@@ -40,6 +43,14 @@ export default async function AdminDashboardPage() {
     fetchError = true
   }
 
+  // Calendar connection is non-critical to the dashboard — load it separately so
+  // a missing table / unconfigured sync never blanks the whole page.
+  try {
+    calendarConnection = await getConnectionSummary()
+  } catch (e) {
+    console.error('[admin/dashboard] calendar connection load failed', e)
+  }
+
   return (
     <div className="min-h-screen bg-cream">
       <header className="flex items-center justify-between border-b border-rule bg-card px-6 py-5 sm:px-14">
@@ -63,7 +74,13 @@ export default async function AdminDashboardPage() {
             Unable to load data. Please refresh.
           </div>
         )}
-        <TabSwitcher requests={requests} blockoutDates={blockoutDates} recipients={recipients} />
+        <TabSwitcher
+          requests={requests}
+          blockoutDates={blockoutDates}
+          recipients={recipients}
+          calendarConnection={calendarConnection}
+          isDemo={isDemo}
+        />
       </main>
     </div>
   )

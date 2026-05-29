@@ -33,6 +33,8 @@ export type Database = {
           submitted_at: string
           reviewed_at: string | null
           reviewed_by: string | null
+          calendar_event_id: string | null
+          calendar_provider: string | null
         }
         Insert: {
           id?: string
@@ -47,6 +49,8 @@ export type Database = {
           submitted_at?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          calendar_event_id?: string | null
+          calendar_provider?: string | null
         }
         Update: {
           id?: string
@@ -61,6 +65,8 @@ export type Database = {
           submitted_at?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          calendar_event_id?: string | null
+          calendar_provider?: string | null
         }
         Relationships: []
       }
@@ -124,6 +130,42 @@ export type Database = {
           email?: string
           label?: string | null
           created_at?: string
+        }
+        Relationships: []
+      }
+      calendar_connections: {
+        Row: {
+          id: string
+          provider: string
+          account_email: string | null
+          sync_home_account_id: string | null
+          calendar_id: string | null
+          calendar_name: string | null
+          cache_cipher: string
+          connected_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          provider?: string
+          account_email?: string | null
+          sync_home_account_id?: string | null
+          calendar_id?: string | null
+          calendar_name?: string | null
+          cache_cipher: string
+          connected_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          provider?: string
+          account_email?: string | null
+          sync_home_account_id?: string | null
+          calendar_id?: string | null
+          calendar_name?: string | null
+          cache_cipher?: string
+          connected_at?: string
+          updated_at?: string
         }
         Relationships: []
       }

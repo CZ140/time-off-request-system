@@ -27,6 +27,8 @@ function r(overrides: Partial<RequestRow>): RequestRow {
     submitted_at: '2026-04-01T00:00:00Z',
     reviewed_at: null,
     reviewed_by: null,
+    calendar_event_id: null,
+    calendar_provider: null,
     ...overrides,
   }
 }
